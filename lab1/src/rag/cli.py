@@ -28,12 +28,14 @@ ConfigOption = typer.Option(
 @app.callback()
 def main(verbose: bool = typer.Option(False, "--verbose", "-v", help="Подробный лог")) -> None:
     """RAG по государству и праву Республики Молдова."""
+    # Сторонние библиотеки (httpx, huggingface_hub, qdrant) — только предупреждения,
+    # наш код (логгеры rag.*) — INFO или DEBUG с флагом -v
     logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
+        level=logging.WARNING,
         format="%(message)s",
         handlers=[RichHandler(console=console, show_path=False)],
     )
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("rag").setLevel(logging.DEBUG if verbose else logging.INFO)
 
 
 @app.command()
@@ -106,6 +108,82 @@ def preprocess(config: Path | None = ConfigOption) -> None:
         )
     console.print(table)
     console.print(f"Результат: {cfg.paths.processed_dir}")
+
+
+@app.command()
+def index(
+    model: list[str] = typer.Option(None, "--model", "-m", help="Модель (по умолчанию все)"),
+    strategy: list[str] = typer.Option(
+        None, "--strategy", "-s", help="Стратегия (по умолчанию все)"
+    ),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Векторизовать chunks и записать в Qdrant: коллекция на каждую пару модель × стратегия."""
+    import torch
+
+    from rag.embeddings import collection_name, get_store, index_chunks
+    from rag.embeddings.encoder import Encoder
+    from rag.preprocessing.pipeline import read_chunks
+
+    cfg = load_config(config)
+    models_ = [cfg.embedding_model(m) for m in model] if model else cfg.embeddings.models
+    strategies = [cfg.chunking_strategy(s) for s in strategy] if strategy else cfg.chunking
+    store = get_store(cfg.paths.index_dir / "qdrant")
+
+    table = Table(title="Индексация")
+    for col in ["Коллекция", "Chunks", "Новые", "Изм.", "Удал.", "Без изм.", "Сек"]:
+        table.add_column(col, justify="left" if col == "Коллекция" else "right", no_wrap=True)
+
+    for spec in models_:
+        encoder = Encoder(spec, cfg.embeddings.device, cfg.embeddings.batch_size)
+        for s in strategies:
+            name = collection_name(s.name, spec.name)
+            console.print(f"[bold]{name}[/] (dim={encoder.dim})")
+            r = index_chunks(
+                store,
+                encoder,
+                name,
+                read_chunks(cfg, s.name),
+                with_header=cfg.embeddings.with_header,
+                show_progress=True,
+            )
+            table.add_row(
+                name, *map(str, [r.total, r.added, r.updated, r.deleted, r.unchanged, r.seconds])
+            )
+        del encoder  # освобождаем видеопамять перед следующей моделью
+        torch.cuda.empty_cache()
+    console.print(table)
+
+
+@app.command()
+def search(
+    query: str = typer.Argument(..., help="Вопрос на русском"),
+    model: str | None = typer.Option(None, "--model", "-m"),
+    strategy: str | None = typer.Option(None, "--strategy", "-s"),
+    k: int = typer.Option(5, "--k", "-k", help="Сколько результатов показать"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Векторный поиск без LLM: какие chunks ближе всего к вопросу."""
+    from rag.embeddings import collection_name, get_store
+    from rag.embeddings.encoder import get_encoder
+
+    cfg = load_config(config)
+    spec = cfg.embedding_model(model or cfg.active.embedding)
+    name = collection_name(strategy or cfg.active.chunking, spec.name)
+    store = get_store(cfg.paths.index_dir / "qdrant")
+    if not store.exists(name):
+        console.print(f"[red]Коллекции {name} нет — запустите `pixi run index`[/]")
+        raise typer.Exit(1)
+
+    encoder = get_encoder(spec, cfg.embeddings.device, cfg.embeddings.batch_size)
+    hits = store.search(name, encoder.encode_query(query), limit=k)
+    console.print(f"[dim]{name}[/]")
+    for rank, hit in enumerate(hits, start=1):
+        c = hit.chunk
+        console.rule(f"[bold]#{rank}[/] score={hit.score:.3f} · {c.title} · {c.section}")
+        console.print(
+            c.text[:400] + ("…" if len(c.text) > 400 else ""), markup=False, highlight=False
+        )
 
 
 @app.command()

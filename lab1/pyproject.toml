@@ -15,6 +15,10 @@ dependencies = [
   "tenacity>=8.5",
   "typer>=0.12",
   "rich>=13.7",
+  "numpy>=1.26",
+  "torch>=2.10",
+  "sentence-transformers>=3.0",
+  "qdrant-client>=1.12",
 ]
 
 [dependency-groups]
@@ -38,14 +42,24 @@ platforms = ["win-64"]
 
 [tool.pixi.dependencies]
 python = "3.12.*"
+# scipy/scikit-learn (зависимости sentence-transformers) берём из conda-forge: DLL из
+# PyPI-колёс scipy блокирует Windows Smart App Control, сборки conda-forge — нет.
+scipy = ">=1.13"
+scikit-learn = ">=1.5"
 
 [tool.pixi.pypi-dependencies]
 rag-md = { path = ".", editable = true }
+# Сборка PyTorch с CUDA 13.0 (драйвер NVIDIA ≥ 580). С PyPI ставится версия только для CPU.
+torch = { version = ">=2.10", index = "https://download.pytorch.org/whl/cu130" }
 
 [tool.pixi.activation.env]
 # Русский текст в консоли Windows без кракозябр
 PYTHONUTF8 = "1"
 PYTHONIOENCODING = "utf-8"
+# Hugging Face на Windows без Developer Mode хранит модели копиями вместо symlink — это нормально
+HF_HUB_DISABLE_SYMLINKS_WARNING = "1"
+HF_HUB_VERBOSITY = "error"
+TRANSFORMERS_VERBOSITY = "error"
 
 [tool.pixi.environments]
 default = { features = ["dev"], solve-group = "default" }
@@ -54,6 +68,7 @@ default = { features = ["dev"], solve-group = "default" }
 check = { cmd = "rag check", description = "Проверить окружение: конфиг, GPU, Langfuse, Ollama" }
 grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
 preprocess = { cmd = "rag preprocess", description = "Очистка и chunking: data/raw → data/processed" }
+index = { cmd = "rag index", description = "Векторизация chunks в Qdrant (data/index)" }
 test = { cmd = "pytest", description = "Запустить тесты" }
 lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
 fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }
@@ -70,6 +85,9 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E501"]  # HTML-фикстуры и параметры тестов удобнее держать одной строкой

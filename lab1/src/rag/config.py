@@ -101,6 +101,36 @@ class ChunkingStrategy(BaseModel):
     min_chars: int = 40  # более короткие chunks отбрасываются
 
 
+class EmbeddingModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)  # frozen → можно кэшировать
+
+    name: str  # короткое имя: входит в название коллекции
+    model_id: str  # id на Hugging Face
+    query_prefix: str = ""  # e5 обучена с префиксами "query: " / "passage: "
+    passage_prefix: str = ""
+    max_seq_length: int = 512  # токенов; длиннее — обрезается
+    fp16: bool = True  # половинная точность на GPU: в ~2 раза быстрее, качество то же
+
+
+class EmbeddingsConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    models: list[EmbeddingModel] = []
+    batch_size: int = 32
+    device: str = "auto"  # auto → cuda, если есть, иначе cpu
+    # Добавлять к тексту chunk заголовок «Статья. Раздел» перед векторизацией
+    with_header: bool = True
+
+
+class ActiveConfig(BaseModel):
+    """Какая комбинация используется RAG по умолчанию (UI, генерация)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    embedding: str = ""
+    chunking: str = ""
+
+
 class AppConfig(BaseModel):
     """Параметры pipeline. Новые секции добавляются по мере реализации этапов."""
 
@@ -110,6 +140,20 @@ class AppConfig(BaseModel):
     grabber: GrabberConfig = GrabberConfig()
     preprocessing: PreprocessingConfig = PreprocessingConfig()
     chunking: list[ChunkingStrategy] = []
+    embeddings: EmbeddingsConfig = EmbeddingsConfig()
+    active: ActiveConfig = ActiveConfig()
+
+    def embedding_model(self, name: str) -> EmbeddingModel:
+        for m in self.embeddings.models:
+            if m.name == name:
+                return m
+        raise KeyError(f"нет модели {name!r} в embeddings.models")
+
+    def chunking_strategy(self, name: str) -> ChunkingStrategy:
+        for s in self.chunking:
+            if s.name == name:
+                return s
+        raise KeyError(f"нет стратегии {name!r} в chunking")
 
 
 def load_config(path: Path | str | None = None) -> AppConfig:

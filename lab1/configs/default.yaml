@@ -61,3 +61,23 @@ chunking:
   - { name: fixed_800_ov150, method: fixed, size: 800, overlap: 150 }
   - { name: paragraph_800, method: paragraph, size: 800 }
   - { name: section_800, method: section, size: 800 }
+
+# Каждая пара (модель × стратегия chunking) индексируется в свою коллекцию Qdrant.
+embeddings:
+  models:
+    - name: e5-base
+      model_id: intfloat/multilingual-e5-base
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+      max_seq_length: 512
+    - name: bge-m3
+      model_id: BAAI/bge-m3
+      max_seq_length: 1024
+  batch_size: 32
+  device: auto
+  with_header: true
+
+# Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
+active:
+  embedding: bge-m3
+  chunking: section_800
