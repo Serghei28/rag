@@ -1,0 +1,25 @@
+# pixi
+.pixi/
+*.egg-info/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+
+# Секреты
+.env
+
+# Тяжёлые артефакты, которые воспроизводятся командами pipeline
+lab1/data/index/
+lab1/data/cache/
+
+# IDE / OS
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+Thumbs.db
+.DS_Store

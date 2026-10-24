@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+
+# Lock-файл pixi генерируется автоматически
+pixi.lock merge=binary linguist-language=YAML linguist-generated=true

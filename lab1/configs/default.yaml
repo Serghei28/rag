@@ -1,0 +1,9 @@
+# Базовая конфигурация pipeline.
+# Конфиги экспериментов будут переопределять отдельные параметры этого файла.
+
+paths:
+  data_dir: data
+  raw_dir: data/raw              # сырые документы от grabber'а
+  processed_dir: data/processed  # очищенные документы и chunks
+  index_dir: data/index          # векторное хранилище
+  experiments_dir: experiments   # результаты экспериментов
