@@ -1,0 +1,27 @@
+# Набор вопросов для оценки RAG. Формат: src/rag/evaluation/dataset.py
+# Проверка файла: pixi run rag eval-check
+#
+# type: factoid | multi_doc | specific | context | no_answer
+# relevant_titles — точные названия статей (как в выводе `pixi run rag retrieve`).
+
+questions:
+  - id: q001
+    question: Кто является президентом Республики Молдова?
+    type: factoid
+    expected_answer: Майя Санду.
+    relevant_titles: [Молдова, Президент Молдовы]
+
+  - id: q002
+    question: Чем отличается порядок избрания президента Молдовы в 2000–2016 годах от нынешнего?
+    type: context
+    expected_answer: >-
+      В 2000–2016 годах президента избирал парламент тайным голосованием депутатов.
+      В 2016 году Конституционный суд признал эту поправку неконституционной, и президента
+      снова избирают прямым всенародным голосованием.
+    relevant_titles: [Молдова]
+    relevant_sections: [Государственное устройство > Президент]
+
+  - id: q003
+    question: Какой рецепт у молдавской мамалыги?
+    type: no_answer
+    expected_answer: В базе нет информации о рецептах; RAG должен сообщить, что информации недостаточно.
