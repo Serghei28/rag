@@ -99,14 +99,15 @@ reranking:
       model_id: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
       max_length: 512
   top_n: 5
-  # Предварительно по 5 вопросам: не по теме ≤ 0.04, по теме ≥ 0.99. Уточняется в экспериментах.
+  # Предварительно по 14 контрольным вопросам (README, этап 4): у bge-reranker правильные
+  # ответы ≥ 0.998, трудные вопросы не по теме ≤ 0.19. Уточняется в экспериментах.
   score_thresholds:
+    bge-reranker: 0.3
     mminilm: 0.3
   batch_size: 16
 
 # Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
-# reranker: mminilm, пока bge-reranker (2,3 ГБ) не скачан — см. README, этап 4.
 active:
   embedding: bge-m3
   chunking: section_800
-  reranker: mminilm
+  reranker: bge-reranker
