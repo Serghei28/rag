@@ -186,6 +186,134 @@ def search(
         )
 
 
+DROP_REASONS = {
+    "score_threshold": "ниже порога similarity",
+    "too_short": "слишком короткие",
+    "duplicate": "дубликаты",
+    "per_document_limit": "лимит chunks на статью",
+    "rerank_threshold": "ниже порога reranker'а",
+    "beyond_top_n": "не вошли в top_n",
+}
+
+
+@app.command()
+def retrieve(
+    query: str = typer.Argument(..., help="Вопрос на русском"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Embedding-модель"),
+    strategy: str | None = typer.Option(None, "--strategy", "-s"),
+    reranker: str | None = typer.Option(None, "--reranker", "-r"),
+    no_rerank: bool = typer.Option(False, "--no-rerank", help="Без reranker'а"),
+    top_k: int | None = typer.Option(None, "--k", "-k", help="Кандидатов из векторного поиска"),
+    top_n: int | None = typer.Option(None, "--n", "-n", help="Сколько chunks в итоге"),
+    title: list[str] = typer.Option(None, "--title", "-t", help="Искать только в статье"),
+    show_text: bool = typer.Option(False, "--text", help="Показать текст chunks"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Полный retrieval: векторный поиск → фильтры → reranker. Показывает каждый шаг."""
+    from rag.retrieval import MetadataFilter, Retriever
+
+    cfg = load_config(config)
+    retriever = Retriever(cfg, embedding=model, chunking=strategy, reranker=reranker)
+    overrides = {
+        k: v
+        for k, v in {"top_k": top_k, "top_n": top_n, "rerank": False if no_rerank else None}.items()
+        if v is not None
+    }
+    result = retriever.retrieve(
+        query, metadata_filter=MetadataFilter(titles=title) if title else None, **overrides
+    )
+
+    console.print(
+        f"[dim]{result.collection} · reranker: {result.reranker or 'нет'} · "
+        f"кандидатов: {len(result.candidates)}[/]"
+    )
+    table = Table(title=query, show_lines=show_text)
+    for col in ["#", "Rerank", "Vector", "Место до", "Статья · раздел"]:
+        table.add_column(col, justify="right" if col != "Статья · раздел" else "left")
+    for rank, c in enumerate(result.chunks, start=1):
+        moved = c.vector_rank - rank
+        arrow = f"[green]↑{moved}[/]" if moved > 0 else f"[red]↓{-moved}[/]" if moved < 0 else "="
+        where = f"{c.chunk.title} · {c.chunk.section}"
+        if show_text:
+            where += "\n[dim]" + c.chunk.text[:300].replace("[", r"\[") + "…[/]"
+        rerank = f"{c.rerank_score:.3f}" if c.rerank_score is not None else "—"
+        table.add_row(str(rank), rerank, f"{c.vector_score:.3f}", f"{c.vector_rank} {arrow}", where)
+    console.print(table)
+
+    if result.is_empty:
+        console.print(
+            "[yellow]Ничего релевантного не найдено — LLM ответит «недостаточно информации»[/]"
+        )
+    for reason, items in result.dropped.items():
+        names = ", ".join(f"{c.chunk.title} ({c.vector_score:.2f})" for c in items[:3])
+        more = f" и ещё {len(items) - 3}" if len(items) > 3 else ""
+        console.print(f"[dim]Отброшено, {DROP_REASONS[reason]}: {len(items)} — {names}{more}[/]")
+    console.print(
+        "[dim]Время, мс: " + ", ".join(f"{k} {v}" for k, v in result.timings_ms.items()) + "[/]"
+    )
+
+
+@app.command()
+def titles(
+    contains: str | None = typer.Argument(None, help="Часть названия, например «выборы»"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Список статей в корпусе (точные названия — для relevant_titles в вопросах)."""
+    from rag.grabber.store import RawStore
+
+    cfg = load_config(config)
+    docs = [
+        r
+        for r in RawStore(cfg.paths.raw_dir).load_manifest().documents.values()
+        if r.status == "active" and (not contains or contains.lower() in r.title.lower())
+    ]
+    for r in sorted(docs, key=lambda r: r.title):
+        console.print(f"{r.title}  [dim]{r.url}[/]", highlight=False)
+    console.print(f"[dim]Всего: {len(docs)}[/]")
+
+
+@app.command("eval-check")
+def eval_check(
+    path: Path | None = typer.Option(
+        None, "--path", "-p", help="По умолчанию data/eval/questions.yaml"
+    ),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Проверить файл с вопросами: формат, типы, названия статей."""
+    from pydantic import ValidationError
+
+    from rag.evaluation.dataset import TYPE_LABELS, load_dataset, unknown_titles
+    from rag.grabber.store import RawStore
+
+    cfg = load_config(config)
+    path = path or cfg.paths.data_dir / "eval" / "questions.yaml"
+    try:
+        dataset = load_dataset(path)
+    except ValidationError as exc:
+        console.print(f"[red]Ошибки в {path}:[/]")
+        for err in exc.errors():
+            where = ".".join(str(x) for x in err["loc"])
+            console.print(f"  [red]•[/] {where}: {err['msg']}")
+        raise typer.Exit(1) from None
+
+    known = {r.title for r in RawStore(cfg.paths.raw_dir).load_manifest().documents.values()}
+    missing = unknown_titles(dataset, known)
+    for qid, titles in missing.items():
+        console.print(f"[red]{qid}[/]: нет статей {titles} — проверьте точное название")
+
+    table = Table(title=f"{path} — {len(dataset.questions)} вопросов")
+    table.add_column("Тип")
+    table.add_column("Описание")
+    table.add_column("Кол-во", justify="right")
+    counts = dataset.by_type()
+    for t, label in TYPE_LABELS.items():
+        table.add_row(t, label, str(counts.get(t, 0)))
+    console.print(table)
+    if missing:
+        raise typer.Exit(1)
+    console.print("[green]Файл корректен[/]")
+
+
 @app.command()
 def chunks(
     title: str = typer.Argument(..., help="Название статьи, например «Конституция Молдовы»"),

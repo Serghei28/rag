@@ -44,6 +44,7 @@ class Encoder:
             spec.model_id, device=self.device, model_kwargs={"torch_dtype": dtype}
         )
         self.model.max_seq_length = spec.max_seq_length
+        self._encode(["прогрев"])  # инициализация CUDA-ядер, чтобы не попала в замеры времени
 
     @property
     def dim(self) -> int:

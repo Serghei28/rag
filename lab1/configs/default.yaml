@@ -77,7 +77,36 @@ embeddings:
   device: auto
   with_header: true
 
+# Retriever → top_k → порог similarity → короткие → дубликаты → лимит на статью → reranker
+retrieval:
+  top_k: 20
+  # Предварительные значения по 8 вопросам (этап 3): ниже — почти наверняка не по теме.
+  # Подбираются на полном наборе вопросов в экспериментах.
+  score_thresholds:
+    e5-base: 0.80
+    bge-m3: 0.50
+  min_chars: 60
+  dedup_threshold: 0.8
+  max_per_document: 3
+
+reranking:
+  enabled: true
+  models:
+    - name: bge-reranker
+      model_id: BAAI/bge-reranker-v2-m3
+      max_length: 512
+    - name: mminilm
+      model_id: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+      max_length: 512
+  top_n: 5
+  # Предварительно по 5 вопросам: не по теме ≤ 0.04, по теме ≥ 0.99. Уточняется в экспериментах.
+  score_thresholds:
+    mminilm: 0.3
+  batch_size: 16
+
 # Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
+# reranker: mminilm, пока bge-reranker (2,3 ГБ) не скачан — см. README, этап 4.
 active:
   embedding: bge-m3
   chunking: section_800
+  reranker: mminilm

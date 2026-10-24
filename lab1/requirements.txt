@@ -14,5 +14,6 @@ numpy>=1.26
 torch>=2.10
 sentence-transformers>=3.0
 qdrant-client>=1.12
+streamlit>=1.40
 pytest>=8.2
 ruff>=0.5

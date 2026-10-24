@@ -122,6 +122,39 @@ class EmbeddingsConfig(BaseModel):
     with_header: bool = True
 
 
+class RetrievalConfig(BaseModel):
+    """Первичный поиск и фильтры до reranker'а."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    top_k: int = 20  # сколько кандидатов достаём из векторного поиска
+    # Порог cosine similarity для каждой embedding-модели: у моделей разные шкалы score
+    score_thresholds: dict[str, float] = {}
+    min_chars: int = 0  # отбросить слишком короткие chunks
+    dedup_threshold: float | None = 0.8  # Jaccard по словам; None — не дедуплицировать
+    max_per_document: int | None = None  # не больше N chunks из одной статьи
+
+
+class RerankerModel(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str
+    model_id: str
+    max_length: int = 512  # токенов на пару (вопрос + chunk)
+    fp16: bool = True
+
+
+class RerankingConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    models: list[RerankerModel] = []
+    top_n: int = 5  # сколько chunks уходит в LLM
+    # Порог релевантности после reranker'а (0..1) для каждой модели; нет ключа — не отсекать
+    score_thresholds: dict[str, float] = {}
+    batch_size: int = 16
+
+
 class ActiveConfig(BaseModel):
     """Какая комбинация используется RAG по умолчанию (UI, генерация)."""
 
@@ -129,6 +162,7 @@ class ActiveConfig(BaseModel):
 
     embedding: str = ""
     chunking: str = ""
+    reranker: str = ""
 
 
 class AppConfig(BaseModel):
@@ -141,7 +175,15 @@ class AppConfig(BaseModel):
     preprocessing: PreprocessingConfig = PreprocessingConfig()
     chunking: list[ChunkingStrategy] = []
     embeddings: EmbeddingsConfig = EmbeddingsConfig()
+    retrieval: RetrievalConfig = RetrievalConfig()
+    reranking: RerankingConfig = RerankingConfig()
     active: ActiveConfig = ActiveConfig()
+
+    def reranker_model(self, name: str) -> RerankerModel:
+        for m in self.reranking.models:
+            if m.name == name:
+                return m
+        raise KeyError(f"нет reranker'а {name!r} в reranking.models")
 
     def embedding_model(self, name: str) -> EmbeddingModel:
         for m in self.embeddings.models:

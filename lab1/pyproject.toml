@@ -19,6 +19,7 @@ dependencies = [
   "torch>=2.10",
   "sentence-transformers>=3.0",
   "qdrant-client>=1.12",
+  "streamlit>=1.40",
 ]
 
 [dependency-groups]
@@ -69,10 +70,12 @@ check = { cmd = "rag check", description = "Проверить окружени�
 grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
 preprocess = { cmd = "rag preprocess", description = "Очистка и chunking: data/raw → data/processed" }
 index = { cmd = "rag index", description = "Векторизация chunks в Qdrant (data/index)" }
+ui = { cmd = "streamlit run src/rag/ui/app.py", description = "Веб-интерфейс (http://localhost:8501)" }
 test = { cmd = "pytest", description = "Запустить тесты" }
 lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
 fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }
-export-requirements = { cmd = "python scripts/export_requirements.py", description = "Обновить requirements.txt из pyproject.toml" }
+download-models = { cmd = "python scripts/download_models.py", description = "Скачать все модели из конфига (~6 ГБ)" }
+export-requirements ={ cmd = "python scripts/export_requirements.py", description = "Обновить requirements.txt из pyproject.toml" }
 
 # ---------------------------------------------------------------- tools ---
 
