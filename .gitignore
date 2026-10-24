@@ -12,7 +12,13 @@ __pycache__/
 # Секреты
 .env
 
+# Личные заметки команды — передаются вручную, не публикуются
+CONTRIBUTING.md
+TASKS.md
+
 # Тяжёлые артефакты, которые воспроизводятся командами pipeline
+lab1/data/raw/
+lab1/data/processed/
 lab1/data/index/
 lab1/data/cache/
 

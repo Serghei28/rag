@@ -7,3 +7,107 @@ paths:
   processed_dir: data/processed  # очищенные документы и chunks
   index_dir: data/index          # векторное хранилище
   experiments_dir: experiments   # результаты экспериментов
+
+# Предметная область: государство и право Республики Молдова (русская Википедия).
+grabber:
+  api_url: https://ru.wikipedia.org/w/api.php
+  categories:
+    - { name: Право Молдовы, depth: 2 }
+    - { name: Государственное устройство Молдовы, depth: 2 }
+    - { name: Политика Молдовы, depth: 1 }
+    - { name: Парламентские выборы в Молдове, depth: 1 }
+    - { name: Президентские выборы в Молдове, depth: 1 }
+    - { name: Государственные символы Молдовы, depth: 1 }
+    - { name: Административное деление Молдовы, depth: 1 }
+  titles:
+    - Молдова
+    - Конституция Молдовы
+    - Парламент Республики Молдова
+    - Президент Республики Молдова
+    - Правительство Республики Молдова
+    - Конституционный суд Республики Молдова
+    - Гагаузия
+    - Приднестровский конфликт
+    - Молдавский язык
+  # Подкатегории, которые не обходим: биографии и сотни статей о сёлах
+  exclude_categories:
+    - Персоналии
+    - Юристы
+    - Политики
+    - Депутаты
+    - Предприниматели
+    - по годам
+    - по десятилетиям
+    - по городам
+    - Административные единицы
+    - Районы городов
+  exclude_titles:
+    - Чемпионат
+    - футбол
+    - "^Список "
+  max_pages: 400
+  request_delay: 0.1
+
+preprocessing:
+  drop_sections: [Примечания, Комментарии, Ссылки, Литература, Источники, См. также, Галерея]
+  keep_infobox: true
+  keep_tables: true
+
+# Все стратегии строятся командой `pixi run preprocess`.
+# Одинаковый целевой размер (800 символов ≈ 200 токенов) — чтобы сравнивать именно способ
+# разбиения, а не размер. Размеры и overlap варьируются в конфигах экспериментов.
+chunking:
+  - { name: fixed_800, method: fixed, size: 800 }
+  - { name: fixed_800_ov150, method: fixed, size: 800, overlap: 150 }
+  - { name: paragraph_800, method: paragraph, size: 800 }
+  - { name: section_800, method: section, size: 800 }
+
+# Каждая пара (модель × стратегия chunking) индексируется в свою коллекцию Qdrant.
+embeddings:
+  models:
+    - name: e5-base
+      model_id: intfloat/multilingual-e5-base
+      query_prefix: "query: "
+      passage_prefix: "passage: "
+      max_seq_length: 512
+    - name: bge-m3
+      model_id: BAAI/bge-m3
+      max_seq_length: 1024
+  batch_size: 32
+  device: auto
+  with_header: true
+
+# Retriever → top_k → порог similarity → короткие → дубликаты → лимит на статью → reranker
+retrieval:
+  top_k: 20
+  # Предварительные значения по 8 вопросам (этап 3): ниже — почти наверняка не по теме.
+  # Подбираются на полном наборе вопросов в экспериментах.
+  score_thresholds:
+    e5-base: 0.80
+    bge-m3: 0.50
+  min_chars: 60
+  dedup_threshold: 0.8
+  max_per_document: 3
+
+reranking:
+  enabled: true
+  models:
+    - name: bge-reranker
+      model_id: BAAI/bge-reranker-v2-m3
+      max_length: 512
+    - name: mminilm
+      model_id: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+      max_length: 512
+  top_n: 5
+  # Предварительно по 14 контрольным вопросам (README, этап 4): у bge-reranker правильные
+  # ответы ≥ 0.998, трудные вопросы не по теме ≤ 0.19. Уточняется в экспериментах.
+  score_thresholds:
+    bge-reranker: 0.3
+    mminilm: 0.3
+  batch_size: 16
+
+# Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
+active:
+  embedding: bge-m3
+  chunking: section_800
+  reranker: bge-reranker
