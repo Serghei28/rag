@@ -1,7 +1,7 @@
 [project]
 name = "rag-md"
 version = "0.1.0"
-description = "RAG-система по законодательству Республики Молдова (лабораторная работа №1)"
+description = "RAG-система по государству и праву Республики Молдова (лабораторная работа №1)"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
@@ -52,6 +52,7 @@ default = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
 check = { cmd = "rag check", description = "Проверить окружение: конфиг, GPU, Langfuse, Ollama" }
+grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
 test = { cmd = "pytest", description = "Запустить тесты" }
 lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
 fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }

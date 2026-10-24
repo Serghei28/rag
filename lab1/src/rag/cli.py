@@ -1,25 +1,81 @@
 """Точка входа командной строки: `pixi run rag <команда>`."""
 
+import logging
 import platform
 import shutil
 import subprocess
+from pathlib import Path
 
 import httpx
 import typer
 from rich.console import Console
+from rich.logging import RichHandler
+from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
 from rich.table import Table
 
 from rag import __version__
 from rag.config import get_settings, load_config
 from rag.tracing import get_langfuse
 
-app = typer.Typer(help="RAG по законодательству Республики Молдова", no_args_is_help=True)
+app = typer.Typer(help="RAG по государству и праву Республики Молдова", no_args_is_help=True)
 console = Console()
+
+ConfigOption = typer.Option(
+    None, "--config", "-c", help="YAML-конфиг (по умолчанию configs/default.yaml)"
+)
 
 
 @app.callback()
-def main() -> None:
-    """RAG по законодательству Республики Молдова."""
+def main(verbose: bool = typer.Option(False, "--verbose", "-v", help="Подробный лог")) -> None:
+    """RAG по государству и праву Республики Молдова."""
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(message)s",
+        handlers=[RichHandler(console=console, show_path=False)],
+    )
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+
+
+@app.command()
+def grab(
+    config: Path | None = ConfigOption,
+    force: bool = typer.Option(False, help="Скачать всё заново, даже неизменённые статьи"),
+    dry_run: bool = typer.Option(False, help="Только показать, что будет скачано"),
+) -> None:
+    """Скачать новые и изменённые статьи Википедии в data/raw."""
+    from rag.grabber import Grabber
+
+    grabber = Grabber(load_config(config))
+    with Progress(
+        TextColumn("[bold]{task.description}"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("{task.fields[title]}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("Выборка статей…", total=None, title="")
+        result = grabber.run(
+            force=force,
+            dry_run=dry_run,
+            on_selected=lambda n: progress.update(task, total=n, description="Загрузка"),
+            on_progress=lambda title: progress.update(task, advance=1, title=title[:50]),
+        )
+
+    table = Table(title="Итог" + (" (dry run)" if dry_run else ""), show_header=False)
+    labels = {
+        "selected": "В выборке",
+        "new": "Новые",
+        "updated": "Изменённые",
+        "unchanged": "Без изменений",
+        "removed": "Выпали из выборки",
+        "duplicates": "Дубликаты",
+        "failed": "Ошибки",
+    }
+    for key, value in result.summary().items():
+        table.add_row(labels[key], str(value))
+    console.print(table)
+    for doc_id, error in result.failed.items():
+        console.print(f"[red]{doc_id}[/]: {error}")
 
 
 @app.command()

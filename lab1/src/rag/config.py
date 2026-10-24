@@ -45,9 +45,30 @@ class PathsConfig(BaseModel):
 
     def resolve(self, root: Path) -> "PathsConfig":
         """Сделать относительные пути абсолютными относительно корня проекта."""
-        return PathsConfig(
-            **{name: p if p.is_absolute() else root / p for name, p in self}
-        )
+        return PathsConfig(**{name: p if p.is_absolute() else root / p for name, p in self})
+
+
+class CategorySeed(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    depth: int = 1  # 0 — только статьи самой категории, 1 — плюс подкатегории и т.д.
+
+
+class GrabberConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    api_url: str = "https://ru.wikipedia.org/w/api.php"
+    # Wikimedia требует User-Agent с контактом: https://meta.wikimedia.org/wiki/User-Agent_policy
+    user_agent: str = "rag-md-lab/0.1 (https://github.com/Serghei28/rag; student project)"
+    categories: list[CategorySeed] = []
+    titles: list[str] = []
+    exclude_categories: list[str] = []  # регулярные выражения по названию подкатегории
+    exclude_titles: list[str] = []  # регулярные выражения по названию статьи
+    max_pages: int | None = None
+    request_delay: float = 0.1  # пауза между запросами, секунды
+    timeout: float = 30.0
+    max_retries: int = 5
 
 
 class AppConfig(BaseModel):
@@ -56,6 +77,7 @@ class AppConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     paths: PathsConfig = PathsConfig()
+    grabber: GrabberConfig = GrabberConfig()
 
 
 def load_config(path: Path | str | None = None) -> AppConfig:

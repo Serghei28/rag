@@ -13,6 +13,7 @@ __pycache__/
 .env
 
 # Тяжёлые артефакты, которые воспроизводятся командами pipeline
+lab1/data/raw/
 lab1/data/index/
 lab1/data/cache/
 
