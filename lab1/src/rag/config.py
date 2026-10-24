@@ -8,6 +8,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict
@@ -71,6 +72,35 @@ class GrabberConfig(BaseModel):
     max_retries: int = 5
 
 
+class PreprocessingConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    # Служебные секции статей, в которых нет содержательного текста
+    drop_sections: list[str] = [
+        "Примечания",
+        "Комментарии",
+        "Ссылки",
+        "Литература",
+        "Источники",
+        "См. также",
+        "Галерея",
+    ]
+    keep_infobox: bool = True  # карточка статьи → строки «ключ: значение»
+    keep_tables: bool = True  # таблицы → строки «ячейка | ячейка»
+
+
+class ChunkingStrategy(BaseModel):
+    """Одна стратегия разбиения. Размеры — в символах (≈ 4 символа на токен для русского)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str
+    method: Literal["fixed", "paragraph", "section"]
+    size: int = 800
+    overlap: int = 0  # только для method=fixed
+    min_chars: int = 40  # более короткие chunks отбрасываются
+
+
 class AppConfig(BaseModel):
     """Параметры pipeline. Новые секции добавляются по мере реализации этапов."""
 
@@ -78,6 +108,8 @@ class AppConfig(BaseModel):
 
     paths: PathsConfig = PathsConfig()
     grabber: GrabberConfig = GrabberConfig()
+    preprocessing: PreprocessingConfig = PreprocessingConfig()
+    chunking: list[ChunkingStrategy] = []
 
 
 def load_config(path: Path | str | None = None) -> AppConfig:

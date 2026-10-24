@@ -79,6 +79,54 @@ def grab(
 
 
 @app.command()
+def preprocess(config: Path | None = ConfigOption) -> None:
+    """Очистить документы из data/raw и построить chunks всеми стратегиями из конфига."""
+    from rag.preprocessing.pipeline import build_chunks, clean_documents, length_stats
+
+    cfg = load_config(config)
+    with Progress(
+        TextColumn("[bold]Очистка"), BarColumn(), MofNCompleteColumn(), console=console
+    ) as progress:
+        task = progress.add_task("", total=None)
+        docs = clean_documents(cfg, on_progress=lambda _: progress.advance(task))
+
+    doc_stats = length_stats([d.char_count for d in docs])
+    console.print(
+        f"Документов: {len(docs)}, символов: {doc_stats['total_chars']:,}, "
+        f"секций: {sum(len(d.sections) for d in docs)}".replace(",", " ")
+    )
+
+    table = Table(title="Chunks по стратегиям (длина в символах)")
+    for col in ["Стратегия", "Chunks", "Средняя", "Медиана", "p95", "Макс."]:
+        table.add_column(col, justify="right" if col != "Стратегия" else "left")
+    for strategy in cfg.chunking:
+        st = length_stats([len(c.text) for c in build_chunks(cfg, docs, strategy)])
+        table.add_row(
+            strategy.name, *(str(st[k]) for k in ["count", "mean", "median", "p95", "max"])
+        )
+    console.print(table)
+    console.print(f"Результат: {cfg.paths.processed_dir}")
+
+
+@app.command()
+def chunks(
+    title: str = typer.Argument(..., help="Название статьи, например «Конституция Молдовы»"),
+    strategy: str = typer.Option("section_800", "--strategy", "-s"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Показать chunks одной статьи — чтобы глазами проверить качество разбиения."""
+    from rag.preprocessing.pipeline import read_chunks
+
+    found = [c for c in read_chunks(load_config(config), strategy) if c.title == title]
+    if not found:
+        console.print(f"[red]Нет chunks для «{title}» в стратегии {strategy}[/]")
+        raise typer.Exit(1)
+    for c in found:
+        console.rule(f"[bold]{c.chunk_id}[/] · {c.section} · {len(c.text)} симв.")
+        console.print(c.text, markup=False, highlight=False)
+
+
+@app.command()
 def check() -> None:
     """Проверить окружение: конфиг, GPU, Langfuse, Ollama."""
     settings = get_settings()

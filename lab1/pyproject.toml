@@ -53,6 +53,7 @@ default = { features = ["dev"], solve-group = "default" }
 [tool.pixi.tasks]
 check = { cmd = "rag check", description = "Проверить окружение: конфиг, GPU, Langfuse, Ollama" }
 grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
+preprocess = { cmd = "rag preprocess", description = "Очистка и chunking: data/raw → data/processed" }
 test = { cmd = "pytest", description = "Запустить тесты" }
 lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
 fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }
@@ -69,3 +70,6 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # HTML-фикстуры и параметры тестов удобнее держать одной строкой

@@ -47,3 +47,17 @@ grabber:
     - "^Список "
   max_pages: 400
   request_delay: 0.1
+
+preprocessing:
+  drop_sections: [Примечания, Комментарии, Ссылки, Литература, Источники, См. также, Галерея]
+  keep_infobox: true
+  keep_tables: true
+
+# Все стратегии строятся командой `pixi run preprocess`.
+# Одинаковый целевой размер (800 символов ≈ 200 токенов) — чтобы сравнивать именно способ
+# разбиения, а не размер. Размеры и overlap варьируются в конфигах экспериментов.
+chunking:
+  - { name: fixed_800, method: fixed, size: 800 }
+  - { name: fixed_800_ov150, method: fixed, size: 800, overlap: 150 }
+  - { name: paragraph_800, method: paragraph, size: 800 }
+  - { name: section_800, method: section, size: 800 }
