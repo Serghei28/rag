@@ -32,8 +32,9 @@ class SearchHit:
     score: float  # cosine similarity: 1 — совпадение, 0 — не связано
 
 
-def collection_name(strategy: str, model: str) -> str:
-    return f"{strategy}__{model}"
+def collection_name(strategy: str, model: str, with_header: bool = True) -> str:
+    """Без заголовка «Статья. Раздел» векторы другие — это отдельная коллекция."""
+    return f"{strategy}__{model}" + ("" if with_header else "__nohdr")
 
 
 def point_id(chunk_id: str) -> str:

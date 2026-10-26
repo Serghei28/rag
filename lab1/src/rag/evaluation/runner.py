@@ -223,6 +223,10 @@ def summarize(results: list[QuestionResult], ks: list[int]) -> dict:
         if answerable:
             keys = answerable[0].retrieval_metrics.keys()
             out["retrieval"] = {k: mean([r.retrieval_metrics[k] for r in answerable]) for k in keys}
+            # вопрос с ответом, но фильтры отсекли всё — ложный отказ ещё до LLM
+            out["answerable_rejected_by_retrieval"] = mean(
+                [float(r.retrieval_empty) for r in answerable]
+            )
         if no_answer:
             out["no_answer_rejected_by_retrieval"] = mean(
                 [float(r.retrieval_empty) for r in no_answer]

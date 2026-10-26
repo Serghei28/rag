@@ -137,7 +137,7 @@ def index(
     for spec in models_:
         encoder = Encoder(spec, cfg.embeddings.device, cfg.embeddings.batch_size)
         for s in strategies:
-            name = collection_name(s.name, spec.name)
+            name = collection_name(s.name, spec.name, cfg.embeddings.with_header)
             console.print(f"[bold]{name}[/] (dim={encoder.dim})")
             r = index_chunks(
                 store,
@@ -169,7 +169,7 @@ def search(
 
     cfg = load_config(config)
     spec = cfg.embedding_model(model or cfg.active.embedding)
-    name = collection_name(strategy or cfg.active.chunking, spec.name)
+    name = collection_name(strategy or cfg.active.chunking, spec.name, cfg.embeddings.with_header)
     store = get_store(cfg.paths.index_dir / "qdrant")
     if not store.exists(name):
         console.print(f"[red]Коллекции {name} нет — запустите `pixi run index`[/]")
@@ -368,6 +368,52 @@ def evaluate(
         table.add_row(key, "—" if value is None else f"{value:.3f}")
     console.print(table)
     console.print(f"Отчёт: {run.path / 'report.md'}")
+
+
+@app.command()
+def experiment(
+    suites: list[str] = typer.Argument(None, help="Серии экспериментов (по умолчанию — список)"),
+    retrieval: bool = typer.Option(False, "--retrieval", help="Все серии без LLM"),
+    generation: bool = typer.Option(False, "--generation", help="Все серии с LLM (долго)"),
+    only: list[str] = typer.Option(None, "--only", help="Перезапустить только эти варианты"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Серии экспериментов: experiments/<серия>.md/.csv/.svg и прогоны в experiments/runs."""
+    from rag.evaluation.experiments import SUITES, flatten, run_suite
+
+    names = list(suites or [])
+    names += [n for n, s in SUITES.items() if retrieval and not s.generate]
+    names += [n for n, s in SUITES.items() if generation and s.generate]
+    if not names:
+        table = Table(title="Серии экспериментов")
+        for col in ["Серия", "Вопрос", "Вариантов", "LLM"]:
+            table.add_column(col)
+        for s in SUITES.values():
+            table.add_row(s.name, s.question, str(len(s.variants)), "да" if s.generate else "")
+        console.print(table)
+        return
+    unknown = [n for n in names if n not in SUITES]
+    if unknown:
+        console.print(f"[red]Нет серий: {unknown}[/]")
+        raise typer.Exit(1)
+
+    cfg = load_config(config)
+    for name in dict.fromkeys(names):
+        suite = SUITES[name]
+        console.rule(f"[bold]{suite.title}[/]")
+        rows = run_suite(cfg, suite, only=only, on_variant=lambda v: console.print(f"→ {v.label}"))
+        table = Table(title=suite.question)
+        keys = ["hit@1", "hit@5", "mrr", "answerable_rejected", "no_answer_rejected"]
+        keys += ["correctness", "faithfulness"] if suite.generate else []
+        for col in ["Вариант", *keys]:
+            table.add_column(col)
+        for v, data in rows:
+            flat = flatten(data["summary"])
+            table.add_row(
+                v.label, *("—" if flat.get(k) is None else f"{flat[k]:.3f}" for k in keys)
+            )
+        console.print(table)
+        console.print(f"[dim]{cfg.paths.experiments_dir / (suite.name + '.md')}[/]")
 
 
 @app.command("judge-check")

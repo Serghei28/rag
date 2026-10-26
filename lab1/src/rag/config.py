@@ -168,6 +168,7 @@ class GenerationConfig(BaseModel):
     timeout: float = 180.0
     require_citations: bool = True
     refusal: str = "В найденных документах недостаточно информации для ответа на этот вопрос."
+    prompt: Literal["v1", "v2"] = "v1"  # версия системного промпта (generation/prompts.py)
 
 
 class EvaluationConfig(BaseModel):

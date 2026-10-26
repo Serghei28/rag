@@ -92,7 +92,7 @@ class Generator:
 
     def _generate(self, query: str, result: RetrievalResult) -> Answer:
         generation = self.config.generation
-        messages = build_messages(query, result.chunks, generation.refusal)
+        messages = build_messages(query, result.chunks, generation.refusal, generation.prompt)
 
         started = time.perf_counter()
         with observe(
