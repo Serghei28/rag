@@ -14,7 +14,7 @@ from rag.config import AppConfig, get_settings
 from rag.generation.llm import OllamaClient
 from rag.generation.prompts import build_messages, is_refusal, parse_citations
 from rag.retrieval import Candidate, MetadataFilter, RetrievalResult, Retriever
-from rag.tracing import observe
+from rag.tracing import current_trace_id, observe
 
 Status = Literal["answered", "no_context", "refused", "unsupported"]
 
@@ -36,6 +36,7 @@ class Answer:
     retrieval: RetrievalResult
     llm_text: str = ""
     timings_ms: dict[str, float] = field(default_factory=dict)
+    trace_id: str | None = None  # id трейса в Langfuse: к нему прикрепляются оценки
 
     @property
     def cited_sources(self) -> list[tuple[int, Candidate]]:
@@ -81,6 +82,7 @@ class Generator:
                 answer = self._generate(query, result)
 
             answer.timings_ms = {**result.timings_ms, **answer.timings_ms}
+            answer.trace_id = current_trace_id()
             if trace:
                 trace.update(
                     output=answer.text,

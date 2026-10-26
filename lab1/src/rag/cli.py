@@ -310,6 +310,105 @@ def ask(
     )
 
 
+@app.command("eval")
+def evaluate(
+    name: str | None = typer.Option(None, "--name", help="Имя прогона (папка в experiments/runs)"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Embedding-модель"),
+    strategy: str | None = typer.Option(None, "--strategy", "-s"),
+    reranker: str | None = typer.Option(None, "--reranker", "-r"),
+    no_rerank: bool = typer.Option(False, "--no-rerank", help="Без reranker'а"),
+    top_k: int | None = typer.Option(None, "--k", "-k", help="Кандидатов из векторного поиска"),
+    top_n: int | None = typer.Option(None, "--n", "-n", help="Сколько chunks отдать LLM"),
+    retrieval_only: bool = typer.Option(False, "--retrieval-only", help="Только метрики поиска"),
+    no_judge: bool = typer.Option(False, "--no-judge", help="Без LLM-судьи"),
+    limit: int | None = typer.Option(None, "--limit", help="Только первые N вопросов"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Прогнать набор вопросов: метрики поиска, ответы LLM и оценки LLM-судьи."""
+    from rag.evaluation.dataset import load_dataset
+    from rag.evaluation.runner import run_evaluation
+    from rag.retrieval import Retriever
+
+    cfg = load_config(config)
+    total = len(load_dataset(cfg.evaluation.dataset).questions)
+    total = min(total, limit) if limit else total
+    retriever = Retriever(cfg, embedding=model, chunking=strategy, reranker=reranker)
+    overrides = {
+        k: v
+        for k, v in {"top_k": top_k, "top_n": top_n, "rerank": False if no_rerank else None}.items()
+        if v is not None
+    }
+    with Progress(
+        TextColumn("[bold]Оценка"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("{task.fields[qid]}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("", total=total, qid="")
+        run = run_evaluation(
+            cfg,
+            name=name,
+            retriever=retriever,
+            generate=not retrieval_only,
+            use_judge=not no_judge,
+            limit=limit,
+            overrides=overrides,
+            on_progress=lambda qid: progress.update(task, advance=1, qid=qid),
+        )
+
+    s = run.summary["overall"]
+    table = Table(title=run.name, show_header=False)
+    for key, value in s.get("retrieval", {}).items():
+        if key == "mrr" or key.endswith(("@1", "@5")):
+            table.add_row(f"retrieval {key}", f"{value:.3f}")
+    if "no_answer_rejected_by_retrieval" in s:
+        table.add_row("no_answer отсечены поиском", f"{s['no_answer_rejected_by_retrieval']:.3f}")
+    for key, value in s.get("generation", {}).items():
+        table.add_row(key, "—" if value is None else f"{value:.3f}")
+    console.print(table)
+    console.print(f"Отчёт: {run.path / 'report.md'}")
+
+
+@app.command("judge-check")
+def judge_check(
+    version: list[str] = typer.Option(
+        ["v1", "v2", "v3"], "--prompt", "-p", help="Версии промпта судьи"
+    ),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Сравнить оценки LLM-судьи с ручной разметкой (experiments/judge_validation)."""
+    from rag.evaluation.judge import make_judge
+    from rag.evaluation.judge_check import check_judge, load_labels, load_results, render_report
+
+    cfg = load_config(config)
+    out_dir = cfg.paths.experiments_dir / "judge_validation"
+    run, labels = load_labels(out_dir / "labels.yaml")
+    results = load_results(cfg.paths.experiments_dir / "runs" / run)
+
+    checks = []
+    for v in version:
+        with console.status(f"Судья, промпт {v}…"):
+            checks.append(check_judge(make_judge(cfg, v), results, labels))
+    report = render_report(run, checks, len(labels))
+    (out_dir / "report.md").write_text(report, encoding="utf-8")
+
+    table = Table(title=f"Судья vs ручная разметка ({len(labels)} ответов прогона {run})")
+    for col in ["Промпт", "Согласие C", "MAE C", "Согласие F", "MAE F", "Расхождений"]:
+        table.add_column(col)
+    for c in checks:
+        table.add_row(
+            c.version,
+            f"{c.agreement['correctness']:.0%}",
+            f"{c.mae['correctness']:.2f}",
+            f"{c.agreement['faithfulness']:.0%}",
+            f"{c.mae['faithfulness']:.2f}",
+            str(len(c.disagreements)),
+        )
+    console.print(table)
+    console.print(f"Отчёт: {out_dir / 'report.md'}")
+
+
 @app.command()
 def titles(
     contains: str | None = typer.Argument(None, help="Часть названия, например «выборы»"),

@@ -115,6 +115,13 @@ generation:
   require_citations: true
   refusal: В найденных документах недостаточно информации для ответа на этот вопрос.
 
+# Оценка качества: `pixi run eval`. Результаты — experiments/runs/<имя прогона>/
+evaluation:
+  dataset: data/eval/questions.yaml
+  ks: [1, 3, 5, 10]
+  judge_model: qwen2.5:7b
+  judge_prompt: v3   # выбран по согласию с ручной разметкой (pixi run rag judge-check)
+
 # Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
 active:
   embedding: bge-m3

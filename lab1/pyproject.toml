@@ -70,7 +70,8 @@ check = { cmd = "rag check", description = "Проверить окружени�
 grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
 preprocess = { cmd = "rag preprocess", description = "Очистка и chunking: data/raw → data/processed" }
 index = { cmd = "rag index", description = "Векторизация chunks в Qdrant (data/index)" }
-ui = { cmd = "streamlit run src/rag/ui/app.py", description = "Веб-интерфейс (http://localhost:8501)" }
+eval = { cmd = "rag eval", description = "Оценка на наборе вопросов → experiments/runs/" }
+ui = { cmd ="streamlit run src/rag/ui/app.py", description = "Веб-интерфейс (http://localhost:8501)" }
 test = { cmd = "pytest", description = "Запустить тесты" }
 lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
 fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }
