@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Заголовок «Статья. Раздел» перед текстом chunk</text>
+<line x1="60" y1="330.0" x2="580" y2="330.0" stroke="#ddd"/>
+<text x="54" y="334.0" text-anchor="end">0.0</text>
+<line x1="60" y1="272.0" x2="580" y2="272.0" stroke="#ddd"/>
+<text x="54" y="276.0" text-anchor="end">0.2</text>
+<line x1="60" y1="214.0" x2="580" y2="214.0" stroke="#ddd"/>
+<text x="54" y="218.0" text-anchor="end">0.4</text>
+<line x1="60" y1="156.0" x2="580" y2="156.0" stroke="#ddd"/>
+<text x="54" y="160.0" text-anchor="end">0.6</text>
+<line x1="60" y1="98.0" x2="580" y2="98.0" stroke="#ddd"/>
+<text x="54" y="102.0" text-anchor="end">0.8</text>
+<line x1="60" y1="40.0" x2="580" y2="40.0" stroke="#ddd"/>
+<text x="54" y="44.0" text-anchor="end">1.0</text>
+<rect x="86.0" y="129.9" width="67.3" height="200.1" fill="#4C72B0"/>
+<text x="119.7" y="126.9" text-anchor="middle" font-size="9">0.69</text>
+<rect x="346.0" y="120.0" width="67.3" height="210.0" fill="#4C72B0"/>
+<text x="379.7" y="117.0" text-anchor="middle" font-size="9">0.72</text>
+<rect x="155.3" y="49.9" width="67.3" height="280.1" fill="#DD8452"/>
+<text x="189.0" y="46.9" text-anchor="middle" font-size="9">0.97</text>
+<rect x="415.3" y="60.0" width="67.3" height="270.0" fill="#DD8452"/>
+<text x="449.0" y="57.0" text-anchor="middle" font-size="9">0.93</text>
+<rect x="224.7" y="96.0" width="67.3" height="234.0" fill="#55A868"/>
+<text x="258.3" y="93.0" text-anchor="middle" font-size="9">0.81</text>
+<rect x="484.7" y="93.4" width="67.3" height="236.6" fill="#55A868"/>
+<text x="518.3" y="90.4" text-anchor="middle" font-size="9">0.82</text>
+<text x="190.0" y="344" text-anchor="end" transform="rotate(-30 190.0 344)">с заголовком</text>
+<text x="450.0" y="344" text-anchor="end" transform="rotate(-30 450.0 344)">без заголовка</text>
+<rect x="595" y="41" width="12" height="12" fill="#4C72B0"/>
+<text x="613" y="51">hit@1</text>
+<rect x="595" y="61" width="12" height="12" fill="#DD8452"/>
+<text x="613" y="71">hit@5</text>
+<rect x="595" y="81" width="12" height="12" fill="#55A868"/>
+<text x="613" y="91">mrr</text>
+</svg>

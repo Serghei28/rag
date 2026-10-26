@@ -1,0 +1,4 @@
+variant,hit@1,hit@5,mrr,recall@5,precision@5,multi_doc_recall@5,answerable_rejected,no_answer_rejected,retrieval_ms
+ov0,0.586,0.897,0.746,0.753,0.497,0.611,0.069,0.833,117.4
+ov150,0.655,0.897,0.776,0.761,0.503,0.736,0.069,0.833,120.7
+ov300,0.655,0.931,0.777,0.805,0.51,0.694,0.069,0.833,118.2

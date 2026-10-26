@@ -1,0 +1,3 @@
+variant,hit@1,hit@5,mrr,recall@5,precision@5,multi_doc_recall@5,answerable_rejected,no_answer_rejected,retrieval_ms,correctness,faithfulness,false_refusal_rate,no_answer_refusal_rate,llm_ms
+qwen7b,0.69,0.966,0.807,0.805,0.49,0.611,0.034,1.0,288.4,0.814,0.929,0.034,1.0,4013.4
+qwen3b,0.69,0.966,0.807,0.805,0.49,0.611,0.034,1.0,403.9,0.714,0.759,0.069,1.0,3558.0

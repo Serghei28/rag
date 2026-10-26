@@ -1,0 +1,177 @@
+{
+  "name": "variance__rep1",
+  "params": {
+    "embedding": "bge-m3",
+    "chunking": "section_800",
+    "reranker": "bge-reranker",
+    "retrieval": {
+      "top_k": 20,
+      "top_n": 5,
+      "score_threshold": 0.5,
+      "min_chars": 60,
+      "dedup_threshold": 0.8,
+      "max_per_document": 3,
+      "rerank": true,
+      "rerank_threshold": 0.3
+    },
+    "with_header": true,
+    "llm": "qwen2.5:7b",
+    "judge": "qwen2.5:7b (v3)",
+    "dataset": "C:\\Users\\Bunker\\Desktop\\rag\\lab1\\data\\eval\\questions.yaml",
+    "questions": 35
+  },
+  "summary": {
+    "overall": {
+      "questions": 35,
+      "retrieval": {
+        "mrr": 0.807,
+        "hit@1": 0.69,
+        "recall@1": 0.463,
+        "precision@1": 0.69,
+        "hit@3": 0.931,
+        "recall@3": 0.698,
+        "precision@3": 0.563,
+        "hit@5": 0.966,
+        "recall@5": 0.805,
+        "precision@5": 0.49,
+        "hit@10": 0.966,
+        "recall@10": 0.856,
+        "precision@10": 0.362
+      },
+      "answerable_rejected_by_retrieval": 0.034,
+      "no_answer_rejected_by_retrieval": 1.0,
+      "generation": {
+        "correctness": 0.814,
+        "faithfulness": 0.929,
+        "answered_rate": 0.966,
+        "false_refusal_rate": 0.034,
+        "no_answer_refusal_rate": 1.0
+      }
+    },
+    "by_type": {
+      "factoid": {
+        "questions": 10,
+        "retrieval": {
+          "mrr": 0.875,
+          "hit@1": 0.8,
+          "recall@1": 0.55,
+          "precision@1": 0.8,
+          "hit@3": 0.9,
+          "recall@3": 0.85,
+          "precision@3": 0.6,
+          "hit@5": 1.0,
+          "recall@5": 0.95,
+          "precision@5": 0.54,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "precision@10": 0.43
+        },
+        "answerable_rejected_by_retrieval": 0.0,
+        "generation": {
+          "correctness": 0.8,
+          "faithfulness": 0.9,
+          "answered_rate": 1.0,
+          "false_refusal_rate": 0.0,
+          "no_answer_refusal_rate": null
+        }
+      },
+      "multi_doc": {
+        "questions": 6,
+        "retrieval": {
+          "mrr": 0.722,
+          "hit@1": 0.5,
+          "recall@1": 0.222,
+          "precision@1": 0.5,
+          "hit@3": 1.0,
+          "recall@3": 0.528,
+          "precision@3": 0.5,
+          "hit@5": 1.0,
+          "recall@5": 0.611,
+          "precision@5": 0.467,
+          "hit@10": 1.0,
+          "recall@10": 0.736,
+          "precision@10": 0.383
+        },
+        "answerable_rejected_by_retrieval": 0.0,
+        "generation": {
+          "correctness": 0.833,
+          "faithfulness": 0.917,
+          "answered_rate": 1.0,
+          "false_refusal_rate": 0.0,
+          "no_answer_refusal_rate": null
+        }
+      },
+      "specific": {
+        "questions": 7,
+        "retrieval": {
+          "mrr": 0.929,
+          "hit@1": 0.857,
+          "recall@1": 0.607,
+          "precision@1": 0.857,
+          "hit@3": 1.0,
+          "recall@3": 0.714,
+          "precision@3": 0.667,
+          "hit@5": 1.0,
+          "recall@5": 0.857,
+          "precision@5": 0.543,
+          "hit@10": 1.0,
+          "recall@10": 0.857,
+          "precision@10": 0.314
+        },
+        "answerable_rejected_by_retrieval": 0.0,
+        "generation": {
+          "correctness": 0.786,
+          "faithfulness": 1.0,
+          "answered_rate": 1.0,
+          "false_refusal_rate": 0.0,
+          "no_answer_refusal_rate": null
+        }
+      },
+      "context": {
+        "questions": 6,
+        "retrieval": {
+          "mrr": 0.639,
+          "hit@1": 0.5,
+          "recall@1": 0.389,
+          "precision@1": 0.5,
+          "hit@3": 0.833,
+          "recall@3": 0.597,
+          "precision@3": 0.444,
+          "hit@5": 0.833,
+          "recall@5": 0.694,
+          "precision@5": 0.367,
+          "hit@10": 0.833,
+          "recall@10": 0.736,
+          "precision@10": 0.283
+        },
+        "answerable_rejected_by_retrieval": 0.167,
+        "generation": {
+          "correctness": 0.667,
+          "faithfulness": 0.9,
+          "answered_rate": 0.833,
+          "false_refusal_rate": 0.167,
+          "no_answer_refusal_rate": null
+        }
+      },
+      "no_answer": {
+        "questions": 6,
+        "no_answer_rejected_by_retrieval": 1.0,
+        "generation": {
+          "correctness": 1.0,
+          "faithfulness": null,
+          "answered_rate": null,
+          "false_refusal_rate": null,
+          "no_answer_refusal_rate": 1.0
+        }
+      }
+    },
+    "latency_ms": {
+      "retrieval_total": 288.4,
+      "embed": 14.6,
+      "search": 18.2,
+      "filters": 1.0,
+      "rerank": 88.9,
+      "llm": 4013.4
+    }
+  }
+}
