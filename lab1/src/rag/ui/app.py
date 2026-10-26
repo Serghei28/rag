@@ -3,6 +3,7 @@
 import streamlit as st
 
 from rag.config import AppConfig, load_config
+from rag.generation import STATUS_LABELS, Generator
 from rag.retrieval import Retriever
 
 
@@ -22,6 +23,18 @@ def get_retriever(
         embedding=embedding or None,
         chunking=chunking or None,
         reranker=reranker or None,
+    )
+
+
+@st.cache_resource
+def get_generator(
+    embedding: str | None,
+    chunking: str | None,
+    reranker: str | None,
+) -> Generator:
+    return Generator(
+        get_config(),
+        retriever=get_retriever(embedding, chunking, reranker),
     )
 
 
@@ -51,9 +64,7 @@ def _render_result(result) -> None:
             ):
                 st.markdown(f"[{chunk.title}]({chunk.url})")
                 rerank_score = (
-                    f"{candidate.rerank_score:.3f}"
-                    if candidate.rerank_score is not None
-                    else "—"
+                    f"{candidate.rerank_score:.3f}" if candidate.rerank_score is not None else "—"
                 )
                 st.caption(
                     f"rerank score: {rerank_score} · vector score: {candidate.vector_score:.3f} "
@@ -128,13 +139,11 @@ def main() -> None:
         st.error("Введите вопрос.")
         return
 
-    st.subheader("Ответ")
-    st.info("Генерация ответа будет добавлена на этапе 5")
-
     try:
-        retriever = get_retriever(embedding, chunking, reranker if rerank_enabled else None)
+        selected_reranker = reranker if rerank_enabled else None
+        generator = get_generator(embedding, chunking, selected_reranker)
         with st.spinner("Ищу релевантные фрагменты…"):
-            result = retriever.retrieve(
+            answer = generator.answer(
                 query.strip(),
                 top_k=top_k,
                 top_n=top_n,
@@ -147,7 +156,17 @@ def main() -> None:
         st.error(f"Не удалось выполнить поиск: {exc}")
         return
 
-    _render_result(result)
+    st.subheader("Ответ")
+    if answer.status == "answered":
+        st.success(answer.text)
+    else:
+        st.warning(answer.text)
+    st.caption(f"{answer.status}: {STATUS_LABELS[answer.status]}")
+    for number, candidate in answer.cited_sources:
+        chunk = candidate.chunk
+        st.markdown(f"**[{number}]** [{chunk.title}]({chunk.url}) · {chunk.section}")
+
+    _render_result(answer.retrieval)
 
 
 if __name__ == "__main__":

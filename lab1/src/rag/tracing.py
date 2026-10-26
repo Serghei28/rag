@@ -1,10 +1,7 @@
-"""Трейсинг в Langfuse.
+"""Трейсинг в Langfuse."""
 
-Каждый запрос к RAG будет записываться в Langfuse как trace с шагами
-retrieval → rerank → filter → generation. Если ключи не заданы, трейсинг
-отключается и pipeline работает без него.
-"""
-
+from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import lru_cache
 
 from langfuse import Langfuse
@@ -22,3 +19,21 @@ def get_langfuse() -> Langfuse | None:
         secret_key=settings.langfuse_secret_key,
         host=settings.langfuse_host,
     )
+
+
+@contextmanager
+def observe(name: str, **kwargs) -> Iterator:
+    """Записать шаг trace в Langfuse или пропустить его без настроенных ключей."""
+    client = get_langfuse()
+    if client is None:
+        yield None
+        return
+    with client.start_as_current_observation(name=name, **kwargs) as observation:
+        yield observation
+
+
+def flush() -> None:
+    """Отправить накопленные трейсы перед завершением короткой CLI-команды."""
+    client = get_langfuse()
+    if client is not None:
+        client.flush()

@@ -254,6 +254,63 @@ def retrieve(
 
 
 @app.command()
+def ask(
+    query: str = typer.Argument(..., help="Вопрос на русском"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Embedding-модель"),
+    strategy: str | None = typer.Option(None, "--strategy", "-s"),
+    reranker: str | None = typer.Option(None, "--reranker", "-r"),
+    no_rerank: bool = typer.Option(False, "--no-rerank", help="Без reranker'а"),
+    top_n: int | None = typer.Option(None, "--n", "-n", help="Сколько chunks отдать LLM"),
+    show_raw: bool = typer.Option(False, "--raw", help="Показать ответ LLM до проверок"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Ответ на вопрос: retrieval → LLM → проверка ссылок на источники."""
+    from rich.panel import Panel
+
+    from rag.generation import STATUS_LABELS, Generator
+    from rag.tracing import flush
+
+    cfg = load_config(config)
+    generator = Generator(cfg, embedding=model, chunking=strategy, reranker=reranker)
+    overrides = {
+        key: value
+        for key, value in {"top_n": top_n, "rerank": False if no_rerank else None}.items()
+        if value is not None
+    }
+    try:
+        answer = generator.answer(query, **overrides)
+    except RuntimeError as exc:
+        console.print(f"[red]{exc}[/]")
+        raise typer.Exit(1) from None
+    finally:
+        flush()
+
+    color = "green" if answer.status == "answered" else "yellow"
+    console.print(
+        Panel(
+            answer.text,
+            title=query,
+            subtitle=f"{answer.status}: {STATUS_LABELS[answer.status]}",
+            border_style=color,
+        )
+    )
+    for number, candidate in answer.cited_sources:
+        chunk = candidate.chunk
+        console.print(f"[bold][{number}][/] {chunk.title} · {chunk.section}  [dim]{chunk.url}[/]")
+    if show_raw and answer.llm_text:
+        console.print(Panel(answer.llm_text, title="Ответ LLM до проверок", border_style="dim"))
+    console.print(
+        f"[dim]{answer.retrieval.collection} · LLM: {cfg.generation.model} · "
+        f"источников в промпте: {len(answer.sources)}[/]"
+    )
+    console.print(
+        "[dim]Время, мс: "
+        + ", ".join(f"{key} {value}" for key, value in answer.timings_ms.items())
+        + "[/]"
+    )
+
+
+@app.command()
 def titles(
     contains: str | None = typer.Argument(None, help="Часть названия, например «выборы»"),
     config: Path | None = ConfigOption,
@@ -343,7 +400,7 @@ def check() -> None:
     table.add_row("Data dir", str(config.paths.data_dir))
     table.add_row("GPU", _gpu_status())
     table.add_row("Langfuse", _langfuse_status())
-    table.add_row("Ollama", _ollama_status(settings.ollama_host))
+    table.add_row("Ollama", _ollama_status(settings.ollama_host, config.generation.model))
     console.print(table)
 
 
@@ -369,14 +426,16 @@ def _langfuse_status() -> str:
     return f"[green]OK ({get_settings().langfuse_host})[/]" if ok else "[red]неверные ключи[/]"
 
 
-def _ollama_status(host: str) -> str:
+def _ollama_status(host: str, model: str) -> str:
     try:
         resp = httpx.get(f"{host}/api/tags", timeout=3)
         resp.raise_for_status()
     except httpx.HTTPError:
         return f"[yellow]недоступна ({host})[/]"
     models = [m["name"] for m in resp.json().get("models", [])]
-    return f"[green]OK, модели: {', '.join(models) or 'нет'}[/]"
+    if model not in models:
+        return f"[yellow]нет модели {model}: `ollama pull {model}`[/]"
+    return f"[green]OK, модели: {', '.join(models)}[/]"
 
 
 if __name__ == "__main__":
