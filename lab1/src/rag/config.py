@@ -155,6 +155,21 @@ class RerankingConfig(BaseModel):
     batch_size: int = 16
 
 
+class GenerationConfig(BaseModel):
+    """LLM (Ollama) и защита от галлюцинаций."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    model: str = "qwen2.5:7b"
+    temperature: float = 0.0
+    num_ctx: int = 4096
+    max_tokens: int = 512
+    seed: int = 42
+    timeout: float = 180.0
+    require_citations: bool = True
+    refusal: str = "В найденных документах недостаточно информации для ответа на этот вопрос."
+
+
 class ActiveConfig(BaseModel):
     """Какая комбинация используется RAG по умолчанию (UI, генерация)."""
 
@@ -177,6 +192,7 @@ class AppConfig(BaseModel):
     embeddings: EmbeddingsConfig = EmbeddingsConfig()
     retrieval: RetrievalConfig = RetrievalConfig()
     reranking: RerankingConfig = RerankingConfig()
+    generation: GenerationConfig = GenerationConfig()
     active: ActiveConfig = ActiveConfig()
 
     def reranker_model(self, name: str) -> RerankerModel:

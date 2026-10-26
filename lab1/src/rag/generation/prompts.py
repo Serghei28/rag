@@ -1,0 +1,51 @@
+"""Промпт для LLM: правила ответа и пронумерованные источники."""
+
+import re
+
+from rag.retrieval import Candidate
+
+SYSTEM_PROMPT = """\
+Ты — справочный ассистент по государству и праву Республики Молдова.
+Отвечай на вопрос ТОЛЬКО по фрагментам из раздела «Источники». Не используй свои знания.
+
+Правила:
+1. После каждого утверждения ставь номер источника в квадратных скобках: [1], [2].
+2. Если в источниках нет ответа на вопрос, ответь ровно одной фразой: «{refusal}»
+3. Не придумывай факты, числа, даты и имена, которых нет в источниках.
+4. Если источники противоречат друг другу, так и скажи и укажи оба источника.
+5. Отвечай по-русски, кратко: 1–4 предложения."""
+
+REFUSAL_MARKER = "недостаточно информации"
+CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+
+
+def format_sources(chunks: list[Candidate]) -> str:
+    return "\n\n".join(
+        f"[{i}] {candidate.chunk.title} — {candidate.chunk.section}\n{candidate.chunk.text}"
+        for i, candidate in enumerate(chunks, start=1)
+    )
+
+
+def build_messages(query: str, chunks: list[Candidate], refusal: str) -> list[dict[str, str]]:
+    return [
+        {"role": "system", "content": SYSTEM_PROMPT.format(refusal=refusal)},
+        {
+            "role": "user",
+            "content": f"Источники:\n\n{format_sources(chunks)}\n\nВопрос: {query}",
+        },
+    ]
+
+
+def parse_citations(text: str) -> list[int]:
+    """Извлечь номера источников в порядке первого упоминания без повторов."""
+    seen: list[int] = []
+    for group in CITATION.findall(text):
+        for value in group.split(","):
+            number = int(value)
+            if number not in seen:
+                seen.append(number)
+    return seen
+
+
+def is_refusal(text: str) -> bool:
+    return REFUSAL_MARKER in text.lower()
