@@ -48,7 +48,9 @@ class Retriever:
         self.config = config
         self.embedding_spec = config.embedding_model(embedding or config.active.embedding)
         self.chunking = chunking or config.active.chunking
-        self.collection = collection_name(self.chunking, self.embedding_spec.name)
+        self.collection = collection_name(
+            self.chunking, self.embedding_spec.name, config.embeddings.with_header
+        )
         self.store = store or get_store(config.paths.index_dir / "qdrant")
         if not self.store.exists(self.collection):
             raise LookupError(f"коллекции {self.collection} нет — запустите `pixi run index`")

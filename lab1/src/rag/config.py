@@ -168,6 +168,18 @@ class GenerationConfig(BaseModel):
     timeout: float = 180.0
     require_citations: bool = True
     refusal: str = "В найденных документах недостаточно информации для ответа на этот вопрос."
+    prompt: Literal["v1", "v2"] = "v1"  # версия системного промпта (generation/prompts.py)
+
+
+class EvaluationConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    dataset: Path = Path("data/eval/questions.yaml")
+    ks: list[int] = [1, 3, 5, 10]  # K для Hit@K, Recall@K, Precision@K
+    judge_model: str = "qwen2.5:7b"  # LLM-судья (Ollama)
+    judge_prompt: Literal["v1", "v2", "v3"] = (
+        "v3"  # версия промптов судьи (src/rag/evaluation/judge.py)
+    )
 
 
 class ActiveConfig(BaseModel):
@@ -193,6 +205,7 @@ class AppConfig(BaseModel):
     retrieval: RetrievalConfig = RetrievalConfig()
     reranking: RerankingConfig = RerankingConfig()
     generation: GenerationConfig = GenerationConfig()
+    evaluation: EvaluationConfig = EvaluationConfig()
     active: ActiveConfig = ActiveConfig()
 
     def reranker_model(self, name: str) -> RerankerModel:
@@ -219,6 +232,8 @@ def load_config(path: Path | str | None = None) -> AppConfig:
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     config = AppConfig.model_validate(raw)
     config.paths = config.paths.resolve(PROJECT_ROOT)
+    if not config.evaluation.dataset.is_absolute():
+        config.evaluation.dataset = PROJECT_ROOT / config.evaluation.dataset
     return config
 
 

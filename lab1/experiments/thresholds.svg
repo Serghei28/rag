@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Порог reranker&#x27;а</text>
+<line x1="60" y1="330.0" x2="580" y2="330.0" stroke="#ddd"/>
+<text x="54" y="334.0" text-anchor="end">0.0</text>
+<line x1="60" y1="272.0" x2="580" y2="272.0" stroke="#ddd"/>
+<text x="54" y="276.0" text-anchor="end">0.2</text>
+<line x1="60" y1="214.0" x2="580" y2="214.0" stroke="#ddd"/>
+<text x="54" y="218.0" text-anchor="end">0.4</text>
+<line x1="60" y1="156.0" x2="580" y2="156.0" stroke="#ddd"/>
+<text x="54" y="160.0" text-anchor="end">0.6</text>
+<line x1="60" y1="98.0" x2="580" y2="98.0" stroke="#ddd"/>
+<text x="54" y="102.0" text-anchor="end">0.8</text>
+<line x1="60" y1="40.0" x2="580" y2="40.0" stroke="#ddd"/>
+<text x="54" y="44.0" text-anchor="end">1.0</text>
+<text x="60.0" y="346" text-anchor="middle">0</text>
+<text x="134.3" y="346" text-anchor="middle">0.01</text>
+<text x="208.6" y="346" text-anchor="middle">0.05</text>
+<text x="282.9" y="346" text-anchor="middle">0.1</text>
+<text x="357.1" y="346" text-anchor="middle">0.3</text>
+<text x="431.4" y="346" text-anchor="middle">0.5</text>
+<text x="505.7" y="346" text-anchor="middle">0.7</text>
+<text x="580.0" y="346" text-anchor="middle">0.9</text>
+<text x="320.0" y="370" text-anchor="middle">порог rerank score</text>
+<polyline points="60.0,330.0 134.3,185.0 208.6,136.6 282.9,136.6 357.1,40.0 431.4,40.0 505.7,40.0 580.0,40.0" fill="none" stroke="#4C72B0" stroke-width="2"/>
+<circle cx="60.0" cy="330.0" r="3.5" fill="#4C72B0"/>
+<circle cx="134.3" cy="185.0" r="3.5" fill="#4C72B0"/>
+<circle cx="208.6" cy="136.6" r="3.5" fill="#4C72B0"/>
+<circle cx="282.9" cy="136.6" r="3.5" fill="#4C72B0"/>
+<circle cx="357.1" cy="40.0" r="3.5" fill="#4C72B0"/>
+<circle cx="431.4" cy="40.0" r="3.5" fill="#4C72B0"/>
+<circle cx="505.7" cy="40.0" r="3.5" fill="#4C72B0"/>
+<circle cx="580.0" cy="40.0" r="3.5" fill="#4C72B0"/>
+<polyline points="60.0,330.0 134.3,330.0 208.6,330.0 282.9,320.1 357.1,320.1 431.4,320.1 505.7,320.1 580.0,300.1" fill="none" stroke="#DD8452" stroke-width="2"/>
+<circle cx="60.0" cy="330.0" r="3.5" fill="#DD8452"/>
+<circle cx="134.3" cy="330.0" r="3.5" fill="#DD8452"/>
+<circle cx="208.6" cy="330.0" r="3.5" fill="#DD8452"/>
+<circle cx="282.9" cy="320.1" r="3.5" fill="#DD8452"/>
+<circle cx="357.1" cy="320.1" r="3.5" fill="#DD8452"/>
+<circle cx="431.4" cy="320.1" r="3.5" fill="#DD8452"/>
+<circle cx="505.7" cy="320.1" r="3.5" fill="#DD8452"/>
+<circle cx="580.0" cy="300.1" r="3.5" fill="#DD8452"/>
+<polyline points="60.0,40.0 134.3,40.0 208.6,40.0 282.9,49.9 357.1,49.9 431.4,49.9 505.7,49.9 580.0,69.9" fill="none" stroke="#55A868" stroke-width="2"/>
+<circle cx="60.0" cy="40.0" r="3.5" fill="#55A868"/>
+<circle cx="134.3" cy="40.0" r="3.5" fill="#55A868"/>
+<circle cx="208.6" cy="40.0" r="3.5" fill="#55A868"/>
+<circle cx="282.9" cy="49.9" r="3.5" fill="#55A868"/>
+<circle cx="357.1" cy="49.9" r="3.5" fill="#55A868"/>
+<circle cx="431.4" cy="49.9" r="3.5" fill="#55A868"/>
+<circle cx="505.7" cy="49.9" r="3.5" fill="#55A868"/>
+<circle cx="580.0" cy="69.9" r="3.5" fill="#55A868"/>
+<rect x="595" y="41" width="12" height="12" fill="#4C72B0"/>
+<text x="613" y="51">no_answer_rejected</text>
+<rect x="595" y="61" width="12" height="12" fill="#DD8452"/>
+<text x="613" y="71">answerable_rejected</text>
+<rect x="595" y="81" width="12" height="12" fill="#55A868"/>
+<text x="613" y="91">hit@5</text>
+</svg>

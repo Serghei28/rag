@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Размер chunk</text>
+<line x1="60" y1="330.0" x2="580" y2="330.0" stroke="#ddd"/>
+<text x="54" y="334.0" text-anchor="end">0.0</text>
+<line x1="60" y1="272.0" x2="580" y2="272.0" stroke="#ddd"/>
+<text x="54" y="276.0" text-anchor="end">0.2</text>
+<line x1="60" y1="214.0" x2="580" y2="214.0" stroke="#ddd"/>
+<text x="54" y="218.0" text-anchor="end">0.4</text>
+<line x1="60" y1="156.0" x2="580" y2="156.0" stroke="#ddd"/>
+<text x="54" y="160.0" text-anchor="end">0.6</text>
+<line x1="60" y1="98.0" x2="580" y2="98.0" stroke="#ddd"/>
+<text x="54" y="102.0" text-anchor="end">0.8</text>
+<line x1="60" y1="40.0" x2="580" y2="40.0" stroke="#ddd"/>
+<text x="54" y="44.0" text-anchor="end">1.0</text>
+<text x="60.0" y="346" text-anchor="middle">400</text>
+<text x="320.0" y="346" text-anchor="middle">800</text>
+<text x="580.0" y="346" text-anchor="middle">1200</text>
+<text x="320.0" y="370" text-anchor="middle">размер chunk, символов</text>
+<polyline points="60.0,99.7 320.0,113.7 580.0,102.9" fill="none" stroke="#4C72B0" stroke-width="2"/>
+<circle cx="60.0" cy="99.7" r="3.5" fill="#4C72B0"/>
+<circle cx="320.0" cy="113.7" r="3.5" fill="#4C72B0"/>
+<circle cx="580.0" cy="102.9" r="3.5" fill="#4C72B0"/>
+<polyline points="60.0,106.7 320.0,111.6 580.0,104.1" fill="none" stroke="#DD8452" stroke-width="2"/>
+<circle cx="60.0" cy="106.7" r="3.5" fill="#DD8452"/>
+<circle cx="320.0" cy="111.6" r="3.5" fill="#DD8452"/>
+<circle cx="580.0" cy="104.1" r="3.5" fill="#DD8452"/>
+<polyline points="60.0,96.0 320.0,96.0 580.0,93.9" fill="none" stroke="#55A868" stroke-width="2"/>
+<circle cx="60.0" cy="96.0" r="3.5" fill="#55A868"/>
+<circle cx="320.0" cy="96.0" r="3.5" fill="#55A868"/>
+<circle cx="580.0" cy="93.9" r="3.5" fill="#55A868"/>
+<polyline points="60.0,101.8 320.0,96.5 580.0,100.0" fill="none" stroke="#C44E52" stroke-width="2"/>
+<circle cx="60.0" cy="101.8" r="3.5" fill="#C44E52"/>
+<circle cx="320.0" cy="96.5" r="3.5" fill="#C44E52"/>
+<circle cx="580.0" cy="100.0" r="3.5" fill="#C44E52"/>
+<rect x="595" y="41" width="12" height="12" fill="#4C72B0"/>
+<text x="613" y="51">fixed mrr</text>
+<rect x="595" y="61" width="12" height="12" fill="#DD8452"/>
+<text x="613" y="71">fixed recall@5</text>
+<rect x="595" y="81" width="12" height="12" fill="#55A868"/>
+<text x="613" y="91">section mrr</text>
+<rect x="595" y="101" width="12" height="12" fill="#C44E52"/>
+<text x="613" y="111">section recall@5</text>
+</svg>

@@ -137,7 +137,7 @@ def index(
     for spec in models_:
         encoder = Encoder(spec, cfg.embeddings.device, cfg.embeddings.batch_size)
         for s in strategies:
-            name = collection_name(s.name, spec.name)
+            name = collection_name(s.name, spec.name, cfg.embeddings.with_header)
             console.print(f"[bold]{name}[/] (dim={encoder.dim})")
             r = index_chunks(
                 store,
@@ -169,7 +169,7 @@ def search(
 
     cfg = load_config(config)
     spec = cfg.embedding_model(model or cfg.active.embedding)
-    name = collection_name(strategy or cfg.active.chunking, spec.name)
+    name = collection_name(strategy or cfg.active.chunking, spec.name, cfg.embeddings.with_header)
     store = get_store(cfg.paths.index_dir / "qdrant")
     if not store.exists(name):
         console.print(f"[red]Коллекции {name} нет — запустите `pixi run index`[/]")
@@ -308,6 +308,151 @@ def ask(
         + ", ".join(f"{key} {value}" for key, value in answer.timings_ms.items())
         + "[/]"
     )
+
+
+@app.command("eval")
+def evaluate(
+    name: str | None = typer.Option(None, "--name", help="Имя прогона (папка в experiments/runs)"),
+    model: str | None = typer.Option(None, "--model", "-m", help="Embedding-модель"),
+    strategy: str | None = typer.Option(None, "--strategy", "-s"),
+    reranker: str | None = typer.Option(None, "--reranker", "-r"),
+    no_rerank: bool = typer.Option(False, "--no-rerank", help="Без reranker'а"),
+    top_k: int | None = typer.Option(None, "--k", "-k", help="Кандидатов из векторного поиска"),
+    top_n: int | None = typer.Option(None, "--n", "-n", help="Сколько chunks отдать LLM"),
+    retrieval_only: bool = typer.Option(False, "--retrieval-only", help="Только метрики поиска"),
+    no_judge: bool = typer.Option(False, "--no-judge", help="Без LLM-судьи"),
+    limit: int | None = typer.Option(None, "--limit", help="Только первые N вопросов"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Прогнать набор вопросов: метрики поиска, ответы LLM и оценки LLM-судьи."""
+    from rag.evaluation.dataset import load_dataset
+    from rag.evaluation.runner import run_evaluation
+    from rag.retrieval import Retriever
+
+    cfg = load_config(config)
+    total = len(load_dataset(cfg.evaluation.dataset).questions)
+    total = min(total, limit) if limit else total
+    retriever = Retriever(cfg, embedding=model, chunking=strategy, reranker=reranker)
+    overrides = {
+        k: v
+        for k, v in {"top_k": top_k, "top_n": top_n, "rerank": False if no_rerank else None}.items()
+        if v is not None
+    }
+    with Progress(
+        TextColumn("[bold]Оценка"),
+        BarColumn(),
+        MofNCompleteColumn(),
+        TextColumn("{task.fields[qid]}"),
+        console=console,
+    ) as progress:
+        task = progress.add_task("", total=total, qid="")
+        run = run_evaluation(
+            cfg,
+            name=name,
+            retriever=retriever,
+            generate=not retrieval_only,
+            use_judge=not no_judge,
+            limit=limit,
+            overrides=overrides,
+            on_progress=lambda qid: progress.update(task, advance=1, qid=qid),
+        )
+
+    s = run.summary["overall"]
+    table = Table(title=run.name, show_header=False)
+    for key, value in s.get("retrieval", {}).items():
+        if key == "mrr" or key.endswith(("@1", "@5")):
+            table.add_row(f"retrieval {key}", f"{value:.3f}")
+    if "no_answer_rejected_by_retrieval" in s:
+        table.add_row("no_answer отсечены поиском", f"{s['no_answer_rejected_by_retrieval']:.3f}")
+    for key, value in s.get("generation", {}).items():
+        table.add_row(key, "—" if value is None else f"{value:.3f}")
+    console.print(table)
+    console.print(f"Отчёт: {run.path / 'report.md'}")
+
+
+@app.command()
+def experiment(
+    suites: list[str] = typer.Argument(None, help="Серии экспериментов (по умолчанию — список)"),
+    retrieval: bool = typer.Option(False, "--retrieval", help="Все серии без LLM"),
+    generation: bool = typer.Option(False, "--generation", help="Все серии с LLM (долго)"),
+    only: list[str] = typer.Option(None, "--only", help="Перезапустить только эти варианты"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Серии экспериментов: experiments/<серия>.md/.csv/.svg и прогоны в experiments/runs."""
+    from rag.evaluation.experiments import SUITES, flatten, run_suite
+
+    names = list(suites or [])
+    names += [n for n, s in SUITES.items() if retrieval and not s.generate]
+    names += [n for n, s in SUITES.items() if generation and s.generate]
+    if not names:
+        table = Table(title="Серии экспериментов")
+        for col in ["Серия", "Вопрос", "Вариантов", "LLM"]:
+            table.add_column(col)
+        for s in SUITES.values():
+            table.add_row(s.name, s.question, str(len(s.variants)), "да" if s.generate else "")
+        console.print(table)
+        return
+    unknown = [n for n in names if n not in SUITES]
+    if unknown:
+        console.print(f"[red]Нет серий: {unknown}[/]")
+        raise typer.Exit(1)
+
+    cfg = load_config(config)
+    for name in dict.fromkeys(names):
+        suite = SUITES[name]
+        console.rule(f"[bold]{suite.title}[/]")
+        rows = run_suite(cfg, suite, only=only, on_variant=lambda v: console.print(f"→ {v.label}"))
+        table = Table(title=suite.question)
+        keys = ["hit@1", "hit@5", "mrr", "answerable_rejected", "no_answer_rejected"]
+        keys += ["correctness", "faithfulness"] if suite.generate else []
+        for col in ["Вариант", *keys]:
+            table.add_column(col)
+        for v, data in rows:
+            flat = flatten(data["summary"])
+            table.add_row(
+                v.label, *("—" if flat.get(k) is None else f"{flat[k]:.3f}" for k in keys)
+            )
+        console.print(table)
+        console.print(f"[dim]{cfg.paths.experiments_dir / (suite.name + '.md')}[/]")
+
+
+@app.command("judge-check")
+def judge_check(
+    version: list[str] = typer.Option(
+        ["v1", "v2", "v3"], "--prompt", "-p", help="Версии промпта судьи"
+    ),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Сравнить оценки LLM-судьи с ручной разметкой (experiments/judge_validation)."""
+    from rag.evaluation.judge import make_judge
+    from rag.evaluation.judge_check import check_judge, load_labels, load_results, render_report
+
+    cfg = load_config(config)
+    out_dir = cfg.paths.experiments_dir / "judge_validation"
+    run, labels = load_labels(out_dir / "labels.yaml")
+    results = load_results(cfg.paths.experiments_dir / "runs" / run)
+
+    checks = []
+    for v in version:
+        with console.status(f"Судья, промпт {v}…"):
+            checks.append(check_judge(make_judge(cfg, v), results, labels))
+    report = render_report(run, checks, len(labels))
+    (out_dir / "report.md").write_text(report, encoding="utf-8")
+
+    table = Table(title=f"Судья vs ручная разметка ({len(labels)} ответов прогона {run})")
+    for col in ["Промпт", "Согласие C", "MAE C", "Согласие F", "MAE F", "Расхождений"]:
+        table.add_column(col)
+    for c in checks:
+        table.add_row(
+            c.version,
+            f"{c.agreement['correctness']:.0%}",
+            f"{c.mae['correctness']:.2f}",
+            f"{c.agreement['faithfulness']:.0%}",
+            f"{c.mae['faithfulness']:.2f}",
+            str(len(c.disagreements)),
+        )
+    console.print(table)
+    console.print(f"Отчёт: {out_dir / 'report.md'}")
 
 
 @app.command()

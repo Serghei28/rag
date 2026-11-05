@@ -1,0 +1,130 @@
+{
+  "name": "chunk_size__section_1200",
+  "params": {
+    "embedding": "bge-m3",
+    "chunking": "section_1200",
+    "reranker": "bge-reranker",
+    "retrieval": {
+      "top_k": 20,
+      "top_n": 5,
+      "score_threshold": 0.5,
+      "min_chars": 60,
+      "dedup_threshold": 0.8,
+      "max_per_document": 3,
+      "rerank": true,
+      "rerank_threshold": 0.3
+    },
+    "with_header": true,
+    "llm": null,
+    "judge": null,
+    "dataset": "C:\\Users\\Bunker\\Desktop\\rag\\lab1\\data\\eval\\questions.yaml",
+    "questions": 35
+  },
+  "summary": {
+    "overall": {
+      "questions": 35,
+      "retrieval": {
+        "mrr": 0.814,
+        "hit@1": 0.724,
+        "recall@1": 0.48,
+        "precision@1": 0.724,
+        "hit@3": 0.897,
+        "recall@3": 0.655,
+        "precision@3": 0.54,
+        "hit@5": 0.966,
+        "recall@5": 0.793,
+        "precision@5": 0.476,
+        "hit@10": 0.966,
+        "recall@10": 0.856,
+        "precision@10": 0.355
+      },
+      "answerable_rejected_by_retrieval": 0.034,
+      "no_answer_rejected_by_retrieval": 1.0
+    },
+    "by_type": {
+      "factoid": {
+        "questions": 10,
+        "retrieval": {
+          "mrr": 0.858,
+          "hit@1": 0.8,
+          "recall@1": 0.55,
+          "precision@1": 0.8,
+          "hit@3": 0.9,
+          "recall@3": 0.85,
+          "precision@3": 0.633,
+          "hit@5": 1.0,
+          "recall@5": 1.0,
+          "precision@5": 0.54,
+          "hit@10": 1.0,
+          "recall@10": 1.0,
+          "precision@10": 0.41
+        },
+        "answerable_rejected_by_retrieval": 0.0
+      },
+      "multi_doc": {
+        "questions": 6,
+        "retrieval": {
+          "mrr": 0.806,
+          "hit@1": 0.667,
+          "recall@1": 0.306,
+          "precision@1": 0.667,
+          "hit@3": 1.0,
+          "recall@3": 0.486,
+          "precision@3": 0.556,
+          "hit@5": 1.0,
+          "recall@5": 0.653,
+          "precision@5": 0.5,
+          "hit@10": 1.0,
+          "recall@10": 0.778,
+          "precision@10": 0.383
+        },
+        "answerable_rejected_by_retrieval": 0.0
+      },
+      "specific": {
+        "questions": 7,
+        "retrieval": {
+          "mrr": 0.929,
+          "hit@1": 0.857,
+          "recall@1": 0.607,
+          "precision@1": 0.857,
+          "hit@3": 1.0,
+          "recall@3": 0.679,
+          "precision@3": 0.524,
+          "hit@5": 1.0,
+          "recall@5": 0.75,
+          "precision@5": 0.486,
+          "hit@10": 1.0,
+          "recall@10": 0.821,
+          "precision@10": 0.3
+        },
+        "answerable_rejected_by_retrieval": 0.0
+      },
+      "context": {
+        "questions": 6,
+        "retrieval": {
+          "mrr": 0.617,
+          "hit@1": 0.5,
+          "recall@1": 0.389,
+          "precision@1": 0.5,
+          "hit@3": 0.667,
+          "recall@3": 0.472,
+          "precision@3": 0.389,
+          "hit@5": 0.833,
+          "recall@5": 0.639,
+          "precision@5": 0.333,
+          "hit@10": 0.833,
+          "recall@10": 0.736,
+          "precision@10": 0.3
+        },
+        "answerable_rejected_by_retrieval": 0.167
+      },
+      "no_answer": {
+        "questions": 6,
+        "no_answer_rejected_by_retrieval": 1.0
+      }
+    },
+    "latency_ms": {
+      "retrieval_total": 161.4
+    }
+  }
+}

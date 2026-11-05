@@ -32,6 +32,30 @@ def observe(name: str, **kwargs) -> Iterator:
         yield observation
 
 
+@contextmanager
+def session(session_id: str, tags: list[str] | None = None, metadata: dict | None = None):
+    """Все трейсы внутри блока попадают в одну сессию Langfuse (например, прогон оценки)."""
+    if get_langfuse() is None:
+        yield
+        return
+    from langfuse import propagate_attributes
+
+    with propagate_attributes(session_id=session_id, tags=tags, metadata=metadata):
+        yield
+
+
+def current_trace_id() -> str | None:
+    client = get_langfuse()
+    return client.get_current_trace_id() if client is not None else None
+
+
+def score(trace_id: str | None, name: str, value: float, comment: str = "") -> None:
+    """Прикрепить оценку (например, LLM-судьи) к трейсу ответа."""
+    client = get_langfuse()
+    if client is not None and trace_id:
+        client.create_score(trace_id=trace_id, name=name, value=value, comment=comment or None)
+
+
 def flush() -> None:
     """Отправить накопленные трейсы перед завершением короткой CLI-команды."""
     client = get_langfuse()

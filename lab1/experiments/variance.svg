@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Разброс между одинаковыми прогонами</text>
+<line x1="60" y1="330.0" x2="580" y2="330.0" stroke="#ddd"/>
+<text x="54" y="334.0" text-anchor="end">0.0</text>
+<line x1="60" y1="272.0" x2="580" y2="272.0" stroke="#ddd"/>
+<text x="54" y="276.0" text-anchor="end">0.2</text>
+<line x1="60" y1="214.0" x2="580" y2="214.0" stroke="#ddd"/>
+<text x="54" y="218.0" text-anchor="end">0.4</text>
+<line x1="60" y1="156.0" x2="580" y2="156.0" stroke="#ddd"/>
+<text x="54" y="160.0" text-anchor="end">0.6</text>
+<line x1="60" y1="98.0" x2="580" y2="98.0" stroke="#ddd"/>
+<text x="54" y="102.0" text-anchor="end">0.8</text>
+<line x1="60" y1="40.0" x2="580" y2="40.0" stroke="#ddd"/>
+<text x="54" y="44.0" text-anchor="end">1.0</text>
+<rect x="77.3" y="93.9" width="67.3" height="236.1" fill="#4C72B0"/>
+<text x="111.0" y="90.9" text-anchor="middle" font-size="9">0.81</text>
+<rect x="250.7" y="89.6" width="67.3" height="240.4" fill="#4C72B0"/>
+<text x="284.3" y="86.6" text-anchor="middle" font-size="9">0.83</text>
+<rect x="424.0" y="89.6" width="67.3" height="240.4" fill="#4C72B0"/>
+<text x="457.7" y="86.6" text-anchor="middle" font-size="9">0.83</text>
+<rect x="146.7" y="60.6" width="67.3" height="269.4" fill="#DD8452"/>
+<text x="180.3" y="57.6" text-anchor="middle" font-size="9">0.93</text>
+<rect x="320.0" y="60.6" width="67.3" height="269.4" fill="#DD8452"/>
+<text x="353.7" y="57.6" text-anchor="middle" font-size="9">0.93</text>
+<rect x="493.3" y="60.6" width="67.3" height="269.4" fill="#DD8452"/>
+<text x="527.0" y="57.6" text-anchor="middle" font-size="9">0.93</text>
+<text x="146.7" y="344" text-anchor="end" transform="rotate(-30 146.7 344)">повтор 1</text>
+<text x="320.0" y="344" text-anchor="end" transform="rotate(-30 320.0 344)">повтор 2</text>
+<text x="493.3" y="344" text-anchor="end" transform="rotate(-30 493.3 344)">повтор 3</text>
+<rect x="595" y="41" width="12" height="12" fill="#4C72B0"/>
+<text x="613" y="51">correctness</text>
+<rect x="595" y="61" width="12" height="12" fill="#DD8452"/>
+<text x="613" y="71">faithfulness</text>
+</svg>

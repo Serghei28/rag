@@ -33,18 +33,20 @@ class OllamaClient:
             "seed": config.seed,
         }
 
-    def chat(self, messages: list[dict[str, str]]) -> LLMResponse:
+    def chat(self, messages: list[dict[str, str]], json_mode: bool = False) -> LLMResponse:
+        """`json_mode` — Ollama гарантирует, что ответ будет валидным JSON (для LLM-судьи)."""
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": False,
+            "options": self.parameters,
+            "keep_alive": "10m",
+        }
+        if json_mode:
+            payload["format"] = "json"
         try:
             response = httpx.post(
-                f"{self.host}/api/chat",
-                json={
-                    "model": self.model,
-                    "messages": messages,
-                    "stream": False,
-                    "options": self.parameters,
-                    "keep_alive": "10m",
-                },
-                timeout=self.config.timeout,
+                f"{self.host}/api/chat", json=payload, timeout=self.config.timeout
             )
         except httpx.ConnectError as exc:
             raise RuntimeError(

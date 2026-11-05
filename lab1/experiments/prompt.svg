@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="420" font-family="Segoe UI, Arial, sans-serif" font-size="12">
+<rect width="760" height="420" fill="white"/>
+<text x="380.0" y="22" text-anchor="middle" font-size="15" font-weight="bold">Системный промпт</text>
+<line x1="60" y1="330.0" x2="580" y2="330.0" stroke="#ddd"/>
+<text x="54" y="334.0" text-anchor="end">0.0</text>
+<line x1="60" y1="272.0" x2="580" y2="272.0" stroke="#ddd"/>
+<text x="54" y="276.0" text-anchor="end">0.2</text>
+<line x1="60" y1="214.0" x2="580" y2="214.0" stroke="#ddd"/>
+<text x="54" y="218.0" text-anchor="end">0.4</text>
+<line x1="60" y1="156.0" x2="580" y2="156.0" stroke="#ddd"/>
+<text x="54" y="160.0" text-anchor="end">0.6</text>
+<line x1="60" y1="98.0" x2="580" y2="98.0" stroke="#ddd"/>
+<text x="54" y="102.0" text-anchor="end">0.8</text>
+<line x1="60" y1="40.0" x2="580" y2="40.0" stroke="#ddd"/>
+<text x="54" y="44.0" text-anchor="end">1.0</text>
+<rect x="86.0" y="93.9" width="102.0" height="236.1" fill="#4C72B0"/>
+<text x="137.0" y="90.9" text-anchor="middle" font-size="9">0.81</text>
+<rect x="346.0" y="93.9" width="102.0" height="236.1" fill="#4C72B0"/>
+<text x="397.0" y="90.9" text-anchor="middle" font-size="9">0.81</text>
+<rect x="190.0" y="60.6" width="102.0" height="269.4" fill="#DD8452"/>
+<text x="241.0" y="57.6" text-anchor="middle" font-size="9">0.93</text>
+<rect x="450.0" y="71.0" width="102.0" height="259.0" fill="#DD8452"/>
+<text x="501.0" y="68.0" text-anchor="middle" font-size="9">0.89</text>
+<text x="190.0" y="344" text-anchor="end" transform="rotate(-30 190.0 344)">промпт v1</text>
+<text x="450.0" y="344" text-anchor="end" transform="rotate(-30 450.0 344)">промпт v2</text>
+<rect x="595" y="41" width="12" height="12" fill="#4C72B0"/>
+<text x="613" y="51">correctness</text>
+<rect x="595" y="61" width="12" height="12" fill="#DD8452"/>
+<text x="613" y="71">faithfulness</text>
+</svg>

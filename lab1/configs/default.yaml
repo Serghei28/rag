@@ -79,7 +79,7 @@ embeddings:
 
 # Retriever → top_k → порог similarity → короткие → дубликаты → лимит на статью → reranker
 retrieval:
-  top_k: 20
+  top_k: 10   # выбрано экспериментом top_k (README, Исследование): лучший Recall@5, быстрее
   # Предварительные значения по 8 вопросам (этап 3): ниже — почти наверняка не по теме.
   # Подбираются на полном наборе вопросов в экспериментах.
   score_thresholds:
@@ -114,6 +114,13 @@ generation:
   max_tokens: 512
   require_citations: true
   refusal: В найденных документах недостаточно информации для ответа на этот вопрос.
+
+# Оценка качества: `pixi run eval`. Результаты — experiments/runs/<имя прогона>/
+evaluation:
+  dataset: data/eval/questions.yaml
+  ks: [1, 3, 5, 10]
+  judge_model: qwen2.5:7b
+  judge_prompt: v3   # выбран по согласию с ручной разметкой (pixi run rag judge-check)
 
 # Комбинация по умолчанию для поиска и генерации (выбор обоснуется экспериментами).
 active:
