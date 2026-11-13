@@ -13,7 +13,7 @@ from sentence_transformers import SentenceTransformer
 from transformers.utils import logging as hf_logging
 
 from rag.config import EmbeddingModel
-from rag.preprocessing.models import Chunk
+from rag.embeddings.text import passage_text  # noqa: F401 — реэкспорт для старых импортов
 
 log = logging.getLogger(__name__)
 hf_logging.disable_progress_bar()  # прогресс-бар «Loading weights» при каждой загрузке модели
@@ -23,14 +23,6 @@ def resolve_device(device: str) -> str:
     if device == "auto":
         return "cuda" if torch.cuda.is_available() else "cpu"
     return device
-
-
-def passage_text(chunk: Chunk, with_header: bool) -> str:
-    """Текст chunk для векторизации. Заголовок даёт контекст коротким фрагментам:
-    «Президент: Майя Санду» без названия статьи неясно, о какой стране речь."""
-    if not with_header:
-        return chunk.text
-    return f"{chunk.title}. {chunk.section}\n{chunk.text}"
 
 
 class Encoder:

@@ -15,7 +15,7 @@ from typing import Protocol
 import numpy as np
 
 from rag.config import EmbeddingModel
-from rag.embeddings.encoder import passage_text
+from rag.embeddings.text import passage_text
 from rag.embeddings.vector_store import VectorStore
 from rag.preprocessing.models import Chunk
 

@@ -456,6 +456,80 @@ def judge_check(
 
 
 @app.command()
+def db(
+    collection: str | None = typer.Argument(None, help="Коллекция; без аргумента — список всех"),
+    limit: int = typer.Option(2, "--limit", "-n", help="Сколько записей показать"),
+    config: Path | None = ConfigOption,
+) -> None:
+    """Показать векторную БД Qdrant: коллекции, записи (metadata + вектор), хранение в SQLite."""
+    import math
+    import sqlite3
+
+    from rag.embeddings import collection_name, get_store
+
+    cfg = load_config(config)
+    root = cfg.paths.index_dir / "qdrant"
+    store = get_store(root)
+    active = collection_name(cfg.active.chunking, cfg.active.embedding, cfg.embeddings.with_header)
+
+    def sqlite_path(name: str) -> Path:
+        return root / "collection" / name / "storage.sqlite"
+
+    if collection is None:
+        table = Table(title=f"Qdrant (встроенный режим): {root}")
+        for col in ["Коллекция", "Записей", "Размерность", "Метрика", "Файл SQLite, МБ"]:
+            table.add_column(col, justify="left" if col == "Коллекция" else "right")
+        for name in store.collections():
+            info = store.collection_info(name)
+            size = sqlite_path(name).stat().st_size / 2**20
+            mark = " ★" if name == active else ""
+            table.add_row(
+                name + mark, str(info["points"]), str(info["dim"]), info["distance"], f"{size:.0f}"
+            )
+        console.print(table)
+        console.print(
+            f"★ — используется по умолчанию (configs/default.yaml → active). "
+            f"Подробнее: [bold]pixi run rag db {active}[/]"
+        )
+        return
+
+    if not store.exists(collection):
+        console.print(f"[red]Нет коллекции {collection}[/]. Список: pixi run rag db")
+        raise typer.Exit(1)
+
+    info = store.collection_info(collection)
+    con = sqlite3.connect(f"file:{sqlite_path(collection)}?mode=ro", uri=True)
+    schema = con.execute("SELECT sql FROM sqlite_master WHERE type = 'table'").fetchone()[0]
+    rows, avg_blob = con.execute("SELECT count(*), avg(length(point)) FROM points").fetchone()
+    con.close()
+
+    console.rule(f"[bold]{collection}[/]")
+    console.print(
+        f"Записей: {info['points']} · вектор: {info['dim']} чисел float32 · метрика: "
+        f"{info['distance']}\n"
+        f"Хранение: {sqlite_path(collection)}\n"
+        f"Таблица SQLite: [cyan]{schema}[/] — {rows} строк, в среднем {avg_blob:.0f} байт на "
+        f"строку (вектор + metadata в сериализованном виде)",
+        highlight=False,
+    )
+    for point in store.sample(collection, limit):
+        payload = dict(point.payload)
+        text = payload.pop("text")
+        vector = point.vector
+        norm = math.sqrt(sum(x * x for x in vector))
+        console.rule(f"id {point.id}")
+        table = Table(show_header=False, box=None)
+        for key, value in payload.items():
+            table.add_row(f"[bold]{key}[/]", str(value))
+        table.add_row(
+            "[bold]text[/]", text[:300].replace("\n", " ") + ("…" if len(text) > 300 else "")
+        )
+        preview = ", ".join(f"{x:.4f}" for x in vector[:8])
+        table.add_row("[bold]vector[/]", f"[{preview}, …]  ({len(vector)} чисел, длина {norm:.4f})")
+        console.print(table, highlight=False)
+
+
+@app.command()
 def titles(
     contains: str | None = typer.Argument(None, help="Часть названия, например «выборы»"),
     config: Path | None = ConfigOption,

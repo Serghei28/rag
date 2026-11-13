@@ -66,15 +66,18 @@ TRANSFORMERS_VERBOSITY = "error"
 default = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.tasks]
-check = { cmd = "rag check", description = "Проверить окружение: конфиг, GPU, Langfuse, Ollama" }
-grab = { cmd = "rag grab", description = "Скачать новые и изменённые статьи в data/raw" }
-preprocess = { cmd = "rag preprocess", description = "Очистка и chunking: data/raw → data/processed" }
-index = { cmd = "rag index", description = "Векторизация chunks в Qdrant (data/index)" }
-eval = { cmd = "rag eval", description = "Оценка на наборе вопросов → experiments/runs/" }
-ui = { cmd ="streamlit run src/rag/ui/app.py", description = "Веб-интерфейс (http://localhost:8501)" }
-test = { cmd = "pytest", description = "Запустить тесты" }
-lint = { cmd = "ruff check src tests", description = "Проверить код линтером" }
-fmt = { cmd = "ruff format src tests", description = "Отформатировать код" }
+# Все команды запускаются через `python -m`, а не через файлы-обёртки rag.exe/streamlit.exe:
+# их блокирует Windows Smart App Control (неподписанные .exe, которые создаёт pip).
+rag = { cmd = "python -m rag.cli", description = "CLI проекта: pixi run rag <команда>, см. pixi run rag --help" }
+check = { cmd = "python -m rag.cli check", description = "Проверить окружение: конфиг, GPU, Langfuse, Ollama" }
+grab = { cmd = "python -m rag.cli grab", description = "Скачать новые и изменённые статьи в data/raw" }
+preprocess = { cmd = "python -m rag.cli preprocess", description = "Очистка и chunking: data/raw → data/processed" }
+index = { cmd = "python -m rag.cli index", description = "Векторизация chunks в Qdrant (data/index)" }
+eval = { cmd = "python -m rag.cli eval", description = "Оценка на наборе вопросов → experiments/runs/" }
+ui = { cmd = "python -m streamlit run src/rag/ui/app.py", description = "Веб-интерфейс (http://localhost:8501)" }
+test = { cmd = "python -m pytest", description = "Запустить тесты" }
+lint = { cmd = "python -m ruff check src tests", description = "Проверить код линтером" }
+fmt = { cmd = "python -m ruff format src tests", description = "Отформатировать код" }
 download-models = { cmd = "python scripts/download_models.py", description = "Скачать все модели из конфига (~6 ГБ)" }
 export-requirements ={ cmd = "python scripts/export_requirements.py", description = "Обновить requirements.txt из pyproject.toml" }
 
