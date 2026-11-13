@@ -120,6 +120,21 @@ class VectorStore:
             hits.append(SearchHit(chunk=Chunk.model_validate(payload), score=p.score))
         return hits
 
+    def collection_info(self, name: str) -> dict:
+        """Размерность, метрика и число записей — для команды `rag db`."""
+        params = self.client.get_collection(name).config.params.vectors
+        return {
+            "name": name,
+            "points": self.count(name),
+            "dim": params.size,
+            "distance": str(params.distance.value),
+        }
+
+    def sample(self, name: str, limit: int = 3) -> list[models.Record]:
+        """Первые записи коллекции вместе с векторами — показать, что лежит в базе."""
+        points, _ = self.client.scroll(name, limit=limit, with_payload=True, with_vectors=True)
+        return points
+
     def close(self) -> None:
         self.client.close()
 
